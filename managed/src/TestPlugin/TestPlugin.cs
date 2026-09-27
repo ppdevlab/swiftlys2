@@ -199,23 +199,7 @@ public class TestPlugin : BasePlugin
         var connectionInfo = Core.Database.GetConnectionInfo(connectionName);
         Core.Logger.LogInformation("[Database] Connection info: {Info}", connectionInfo);
 
-        try
-        {
-            using var connection = Core.Database.GetConnection(connectionName);
-            connection.Open();
-            Core.Logger.LogInformation("[Database] Connection opened successfully!");
-
-            // Simple query test
-            var result = connection.QueryFirstOrDefault<int>("SELECT 1");
-            Core.Logger.LogInformation("[Database] Query 'SELECT 1' returned: {Result}", result);
-
-            connection.Close();
-            Core.Logger.LogInformation("[Database] Connection closed.");
-        }
-        catch (Exception ex)
-        {
-            Core.Logger.LogError(ex, "[Database] Connection failed: {Message}", ex.Message);
-        }
+        using var conn = Core.Database.GetConnection(connectionName);
     }
 
     [GameEventHandler(HookMode.Pre)]

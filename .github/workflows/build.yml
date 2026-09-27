@@ -381,6 +381,13 @@ jobs:
         name: Release v${{ needs.versioning.outputs.semVer }}
         body: ${{ needs.versioning.outputs.semVer  }}
 
+    - name: Trigger API docs build
+      uses: peter-evans/repository-dispatch@v3
+      with:
+        token: ${{ secrets.SWIFTLYCHAN_PAT }}
+        repository: swiftly-solution/swiftlys2.net-docs
+        event-type: swiftlys2-updated
+
     - name: Get commit summary for beta
       if: github.ref == 'refs/heads/beta'
       id: beta_commits

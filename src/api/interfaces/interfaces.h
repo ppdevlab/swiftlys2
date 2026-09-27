@@ -35,7 +35,6 @@
 #include <api/monitor/logger/logger.h>
 #include <api/monitor/crashreporter/crashreporter.h>
 
-#include <api/network/database/manager.h>
 #include <api/network/netmessages/netmessages.h>
 
 #include <api/scripting/scripting.h>
@@ -76,7 +75,6 @@ extern IEventManager* g_pGameEventManager;
 extern IScriptingAPI* g_pScriptingAPI;
 extern IPlayerManager* g_pPlayerManager;
 extern IVoiceManager* g_pVoiceManager;
-extern IDatabaseManager* g_pDatabaseManager;
 extern ITranslations* g_pTranslations;
 extern IServerCommands* g_pServerCommands;
 extern INetMessages* g_pNetMessages;

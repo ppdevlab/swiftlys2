@@ -215,7 +215,6 @@ bool SwiftlyCore::Load(BridgeKind_t kind, CreateIFaceFn serverFactory, CreateIFa
     }
 
     g_pPlayerManager->Initialize();
-    g_pDatabaseManager->Initialize();
     g_pTranslations->Initialize();
     g_pNetMessages->Initialize();
     g_pVoiceManager->Initialize();
