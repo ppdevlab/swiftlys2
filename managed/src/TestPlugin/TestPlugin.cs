@@ -138,6 +138,11 @@ public class TestPlugin : BasePlugin
     {
         Console.WriteLine("[TestPlugin] TestPlugin constructed successfully!");
 
+        core.GameHooks.Controller.ProcessUsercmds.Pre += ( ref @event ) =>
+        {
+            var usercmds = @event.Params.Usercmds;
+        };
+
         core.GameHooks.Movement.PlayerMove.Pre += ( ref @event ) =>
         {
             @event.Params.MoveData.MaxSpeed = 2000f;
