@@ -378,10 +378,10 @@ internal class CoreCommandService
         if (args.Length == 1)
         {
             var table = new Table().AddColumn("Command").AddColumn("Description")
-                .AddRow("enable <1|2>", "Enable the profiler (1 = light/EventPipe, 2 = heavy/Harmony)")
+                .AddRow("enable <1>", "Enable the profiler (1 = EventPipe)")
                 .AddRow("disable", "Disable the profiler")
                 .AddRow("status", "Show the status of the profiler")
-                .AddRow("save", "Save the profiler data to a file");
+                .AddRow(Markup.Escape("save [nosummary]"), "Save the profiler data to a file (pass 'nosummary' to skip the .summary.txt report)");
             AnsiConsole.Write(table);
             return;
         }
@@ -390,14 +390,12 @@ internal class CoreCommandService
         {
             case "enable":
                 var levelArg = args.Length > 2 ? args[2].Trim() : "1";
-                if (!int.TryParse(levelArg, out var levelValue) || levelValue is not (1 or 2))
+                if (!int.TryParse(levelArg, out var levelValue) || levelValue is not 1)
                 {
-                    logger.LogWarning("Usage: profiler enable <1|2> (1 = light, 2 = heavy)");
+                    logger.LogWarning("Usage: profiler enable <1> (1 = EventPipe)");
                     break;
                 }
                 var level = (ProfilerLevel)levelValue;
-                if (level == ProfilerLevel.Heavy)
-                    logger.LogWarning("Heavy mode patches the core SwiftlyS2 assembly, SwiftlyS2.Profiler, and every loaded plugin with Harmony - this will add per-call overhead while active.");
                 profileService.Enable(level);
                 logger.LogInformation("The profiler has been enabled ({Level}).", level);
                 break;
@@ -409,7 +407,8 @@ internal class CoreCommandService
                 logger.LogInformation("Profiler is currently {Status}.", profileService.CurrentLevel);
                 break;
             case "save":
-                _ = profileService.SaveAsync(rootDirService.GetRoot(), logger);
+                var generateSummary = !(args.Length > 2 && args[2].Trim().Equals("nosummary", StringComparison.OrdinalIgnoreCase));
+                _ = profileService.SaveAsync(rootDirService.GetRoot(), logger, generateSummary);
                 break;
             default:
                 logger.LogWarning("Unknown command");

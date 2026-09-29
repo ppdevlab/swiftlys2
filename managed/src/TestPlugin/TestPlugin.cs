@@ -16,7 +16,6 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using SwiftlyS2.Shared.Events;
 using SwiftlyS2.Shared.Memory;
-using Dapper;
 using SwiftlyS2.Shared.Sounds;
 using SwiftlyS2.Shared.EntitySystem;
 using SwiftlyS2.Shared.Players;
@@ -25,6 +24,7 @@ using SwiftlyS2.Shared.SteamAPI;
 using SwiftlyS2.Core.Menus.OptionsBase;
 using SwiftlyS2.Shared.Trace;
 using System.Diagnostics;
+using System.Reflection;
 
 namespace TestPlugin;
 
@@ -208,6 +208,53 @@ public class TestPlugin : BasePlugin
         Core.Logger.LogInformation("[Database] Connection info: {Info}", connectionInfo);
 
         using var conn = Core.Database.GetConnection(connectionName);
+    }
+
+    [Command("analyzenettrace")]
+    public void AnalyzeNetTraceCommand( ICommandContext context )
+    {
+        if (context.Args.Length < 1)
+        {
+            context.Reply("Usage: analyzenettrace <path-to-.nettrace>");
+            return;
+        }
+
+        var path = context.Args[0];
+        if (!File.Exists(path))
+        {
+            context.Reply($"File not found: {path}");
+            return;
+        }
+
+        context.Reply($"Analyzing {path}...");
+
+        Task.Run(() =>
+        {
+            try
+            {
+                var hostDir = AppContext.BaseDirectory;
+                var profilerDll = Path.Combine(hostDir, "..", "SwiftlyS2.Profiler.dll");
+                if (!File.Exists(profilerDll))
+                {
+                    Core.Logger.LogWarning("[NetTrace] SwiftlyS2.Profiler.dll not found at {Path}", profilerDll);
+                    return;
+                }
+
+                var asm = Assembly.LoadFrom(profilerDll);
+                _ = asm.GetType("SwiftlyS2.Core.Services.ProfilerAnalyzer")!
+                    .GetMethod("Analyze")!
+                    .Invoke(null, [path, Core.Logger]);
+
+                var summaryPath = path.EndsWith(".nettrace", StringComparison.OrdinalIgnoreCase)
+                    ? path.Replace(".nettrace", ".summary.txt")
+                    : path + ".summary.txt";
+                Core.Logger.LogInformation("[NetTrace] Analysis complete → {Path}", summaryPath);
+            }
+            catch (Exception ex)
+            {
+                Core.Logger.LogError(ex, "[NetTrace] Analysis failed.");
+            }
+        });
     }
 
     [GameEventHandler(HookMode.Pre)]
