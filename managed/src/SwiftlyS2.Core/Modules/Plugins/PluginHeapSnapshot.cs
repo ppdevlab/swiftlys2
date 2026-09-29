@@ -26,42 +26,53 @@ internal static class PluginHeapSnapshot
         _ => Gen.Other
     };
 
-    public static Dictionary<string, PluginHeapStats> Take( Dictionary<string, string> assemblyNameToPlugin )
+    public static Dictionary<string, PluginHeapStats> Take( Dictionary<string, string> assemblyNameToPlugin, string tempDirectory )
     {
-        using var dt = DataTarget.CreateSnapshotAndAttach(Environment.ProcessId);
-        using var rt = dt.ClrVersions[0].CreateRuntime();
-        var heap = rt.Heap;
+        _ = Directory.CreateDirectory(tempDirectory);
 
-        var live = new HashSet<ulong>();
-        var stack = new Stack<ClrObject>();
-        foreach (var root in heap.EnumerateRoots())
+        var previousTmpDir = Environment.GetEnvironmentVariable("TMPDIR");
+        Environment.SetEnvironmentVariable("TMPDIR", tempDirectory);
+        try
         {
-            var o = root.Object;
-            if (o.IsValid && live.Add(o.Address)) stack.Push(o);
+            using var dt = DataTarget.CreateSnapshotAndAttach(Environment.ProcessId);
+            using var rt = dt.ClrVersions[0].CreateRuntime();
+            var heap = rt.Heap;
+
+            var live = new HashSet<ulong>();
+            var stack = new Stack<ClrObject>();
+            foreach (var root in heap.EnumerateRoots())
+            {
+                var o = root.Object;
+                if (o.IsValid && live.Add(o.Address)) stack.Push(o);
+            }
+            while (stack.Count > 0)
+            {
+                var o = stack.Pop();
+                foreach (var r in o.EnumerateReferences(carefully: false, considerDependantHandles: true))
+                    if (r.IsValid && live.Add(r.Address)) stack.Push(r);
+            }
+
+            var result = new Dictionary<string, PluginHeapStats>(StringComparer.OrdinalIgnoreCase);
+            foreach (var seg in heap.Segments)
+            foreach (var obj in seg.EnumerateObjects())
+            {
+                if (!obj.IsValid || obj.IsFree) continue;
+
+                var moduleName = obj.Type?.Module?.Name;
+                var simpleName = string.IsNullOrEmpty(moduleName) ? null : Path.GetFileNameWithoutExtension(moduleName);
+                var owner = simpleName != null && assemblyNameToPlugin.TryGetValue(simpleName, out var p) ? p : UnattributedKey;
+
+                if (!result.TryGetValue(owner, out var s)) result[owner] = s = new PluginHeapStats();
+
+                var gen = (int)Map(seg.GetGeneration(obj.Address));
+                if (live.Contains(obj.Address)) s.Live[gen] += (long)obj.Size;
+                else s.Dead[gen] += (long)obj.Size;
+            }
+            return result;
         }
-        while (stack.Count > 0)
+        finally
         {
-            var o = stack.Pop();
-            foreach (var r in o.EnumerateReferences(carefully: false, considerDependantHandles: true))
-                if (r.IsValid && live.Add(r.Address)) stack.Push(r);
+            Environment.SetEnvironmentVariable("TMPDIR", previousTmpDir);
         }
-
-        var result = new Dictionary<string, PluginHeapStats>(StringComparer.OrdinalIgnoreCase);
-        foreach (var seg in heap.Segments)
-        foreach (var obj in seg.EnumerateObjects())
-        {
-            if (!obj.IsValid || obj.IsFree) continue;
-
-            var moduleName = obj.Type?.Module?.Name;
-            var simpleName = string.IsNullOrEmpty(moduleName) ? null : Path.GetFileNameWithoutExtension(moduleName);
-            var owner = simpleName != null && assemblyNameToPlugin.TryGetValue(simpleName, out var p) ? p : UnattributedKey;
-
-            if (!result.TryGetValue(owner, out var s)) result[owner] = s = new PluginHeapStats();
-
-            var gen = (int)Map(seg.GetGeneration(obj.Address));
-            if (live.Contains(obj.Address)) s.Live[gen] += (long)obj.Size;
-            else s.Dead[gen] += (long)obj.Size;
-        }
-        return result;
     }
 }

@@ -125,7 +125,7 @@ internal class CoreCommandService
                     }
                 }
 
-                var byPlugin = PluginHeapSnapshot.Take(assemblyNameToPlugin);
+                var byPlugin = PluginHeapSnapshot.Take(assemblyNameToPlugin, rootDirService.GetTempRoot());
 
                 var table = new Table()
                     .Title($"Per-Plugin Heap Breakdown (scanned in {stopwatch.ElapsedMilliseconds} ms)")
