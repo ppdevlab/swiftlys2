@@ -134,6 +134,9 @@ public class TestPlugin : BasePlugin
     private volatile bool _simRunning;
     private static readonly char[] _simChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ".ToCharArray();
 
+    private Thread? _profilerStressThread;
+    private volatile bool _profilerStressRunning;
+
     public TestPlugin( ISwiftlyCore core ) : base(core)
     {
         Console.WriteLine("[TestPlugin] TestPlugin constructed successfully!");
@@ -1878,9 +1881,69 @@ public class TestPlugin : BasePlugin
         Core.Logger.LogInformation("[SimLog] Stopped.");
     }
 
+    [Command("profilerstress")]
+    public void ProfilerStressCommand( ICommandContext context )
+    {
+        if (_profilerStressRunning)
+        {
+            Core.Logger.LogInformation("[ProfilerStress] Already running.");
+            return;
+        }
+
+        var args = context.Args;
+        var ratePerSec = args.Length > 1 && int.TryParse(args[1], out var r) && r > 0 ? r : 50000;
+        var perTick = Math.Max(1, ratePerSec / 100);
+
+        _profilerStressRunning = true;
+        _profilerStressThread = new Thread(() =>
+        {
+            long total = 0;
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            var lastReport = sw.ElapsedMilliseconds;
+
+            while (_profilerStressRunning)
+            {
+                for (var i = 0; i < perTick && _profilerStressRunning; i++)
+                {
+                    Core.Profiler.RecordTime("stress_event", 0.01);
+                    total++;
+                }
+
+                if (sw.ElapsedMilliseconds - lastReport >= 1000)
+                {
+                    lastReport = sw.ElapsedMilliseconds;
+                    Core.Logger.LogInformation("[ProfilerStress] {Total} events emitted so far (~{Rate}/sec target).", total, ratePerSec);
+                }
+
+                Thread.Sleep(10);
+            }
+
+            Core.Logger.LogInformation("[ProfilerStress] Stopped, {Total} events emitted total.", total);
+        })
+        {
+            IsBackground = true,
+            Name = "ProfilerStress"
+        };
+        _profilerStressThread.Start();
+        Core.Logger.LogInformation("[ProfilerStress] Started, targeting ~{Rate} events/sec. Make sure 'sw profiler enable 1' was run first, then use 'sw profiler save' to time the summary generation.", ratePerSec);
+    }
+
+    [Command("profilerstressstop")]
+    public void ProfilerStressStopCommand( ICommandContext context )
+    {
+        if (!_profilerStressRunning)
+        {
+            Core.Logger.LogInformation("[ProfilerStress] Not running.");
+            return;
+        }
+        _profilerStressRunning = false;
+        Core.Logger.LogInformation("[ProfilerStress] Stopping...");
+    }
+
     public override void Unload()
     {
         _simRunning = false;
+        _profilerStressRunning = false;
         Console.WriteLine("TestPlugin unloaded");
     }
 }

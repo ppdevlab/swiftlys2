@@ -1,6 +1,7 @@
 using System.Runtime;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Runtime.Loader;
 using Spectre.Console;
 using Microsoft.Extensions.Logging;
 using SwiftlyS2.Shared;
@@ -8,6 +9,7 @@ using SwiftlyS2.Core.Plugins;
 using SwiftlyS2.Core.Natives;
 using SwiftlyS2.Shared.Commands;
 using SwiftlyS2.Shared.Plugins;
+using System.Diagnostics;
 
 namespace SwiftlyS2.Core.Services;
 
@@ -18,6 +20,7 @@ internal class CoreCommandService
     private readonly PluginManager pluginManager;
     private readonly RootDirService rootDirService;
     private readonly ProfileService profileService;
+    private int _memoryScanInProgress;
 
     public CoreCommandService( ILogger<CoreCommandService> logger, ISwiftlyCore core, PluginManager pluginManager, RootDirService rootDirService, ProfileService profileService )
     {
@@ -75,7 +78,7 @@ internal class CoreCommandService
             logger.LogInformation("{Output}", output);
         }
 
-        void ShowGarbageCollectionInfo()
+        void ShowMemoryInfo()
         {
             var output = string.Join("\n", [
                 $"Garbage Collection Information:",
@@ -86,6 +89,68 @@ internal class CoreCommandService
                 $"  - Latency Mode: {GCSettings.LatencyMode}"
             ]);
             logger.LogInformation("{Output}", output);
+
+            if (Interlocked.CompareExchange(ref _memoryScanInProgress, 1, 0) != 0)
+            {
+                context.Reply("A per-plugin heap scan is already running, please wait for it to finish.");
+                return;
+            }
+
+            logger.LogInformation("Scanning managed heap for a per-plugin breakdown, this can take a few seconds on a busy server...");
+
+            _ = Task.Run(RunPluginHeapScan);
+        }
+
+        void RunPluginHeapScan()
+        {
+            var stopwatch = Stopwatch.StartNew();
+
+            try
+            {
+                var assemblyNameToPlugin = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var plugin in pluginManager.GetPlugins())
+                {
+                    if (plugin.Status != PluginStatus.Loaded || plugin.Plugin == null || plugin.Metadata == null)
+                        continue;
+
+                    var alc = AssemblyLoadContext.GetLoadContext(plugin.Plugin.GetType().Assembly);
+                    if (alc == null)
+                        continue;
+
+                    foreach (var asm in alc.Assemblies)
+                    {
+                        var name = asm.GetName().Name;
+                        if (!string.IsNullOrEmpty(name))
+                            assemblyNameToPlugin[name] = plugin.Metadata.Id;
+                    }
+                }
+
+                var byPlugin = PluginHeapSnapshot.Take(assemblyNameToPlugin);
+
+                var table = new Table()
+                    .Title($"Per-Plugin Heap Breakdown (scanned in {stopwatch.ElapsedMilliseconds} ms)")
+                    .AddColumn("Plugin")
+                    .AddColumn("Live Total")
+                    .AddColumn("Live Old (Gen2+LOH)")
+                    .AddColumn("Dead (uncollected)");
+
+                foreach (var (key, stats) in byPlugin.OrderByDescending(kv => kv.Value.LiveTotal))
+                    _ = table.AddRow(
+                        Markup.Escape(key),
+                        $"{stats.LiveTotal / 1024.0f / 1024.0f:0.00} MB",
+                        $"{stats.LiveOld / 1024.0f / 1024.0f:0.00} MB",
+                        $"{stats.DeadTotal / 1024.0f / 1024.0f:0.00} MB");
+
+                AnsiConsole.Write(table);
+            }
+            catch (Exception e)
+            {
+                logger.LogWarning(e, "Failed to walk the managed heap for a per-plugin breakdown");
+            }
+            finally
+            {
+                Volatile.Write(ref _memoryScanInProgress, 0);
+            }
         }
 
         void ShowCredits()
@@ -140,8 +205,8 @@ internal class CoreCommandService
                 case "version":
                     ShowVersionInfo();
                     break;
-                case "gc" when RequireConsoleAccess():
-                    ShowGarbageCollectionInfo();
+                case "memory" when RequireConsoleAccess():
+                    ShowMemoryInfo();
                     break;
                 case "plugins" when RequireConsoleAccess():
                     PluginCommand(context);
@@ -187,7 +252,7 @@ internal class CoreCommandService
                 .AddRow(Markup.Escape("cmds [page]"), "List all plugin commands (paginated, 20 per page)")
                 .AddRow("confilter", "Console Filter Menu")
                 .AddRow("plugins", "Plugin Management Menu")
-                .AddRow("gc", "Show garbage collection information on managed")
+                .AddRow("memory", "Show managed memory usage overview and a per-plugin heap breakdown")
                 .AddRow("profiler", "Profiler Menu")
                 .AddRow("translations", "Translations Menu");
         }
