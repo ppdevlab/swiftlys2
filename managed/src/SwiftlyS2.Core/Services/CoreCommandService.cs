@@ -20,7 +20,6 @@ internal class CoreCommandService
     private readonly PluginManager pluginManager;
     private readonly RootDirService rootDirService;
     private readonly ProfileService profileService;
-    private int _memoryScanInProgress;
 
     public CoreCommandService( ILogger<CoreCommandService> logger, ISwiftlyCore core, PluginManager pluginManager, RootDirService rootDirService, ProfileService profileService )
     {
@@ -46,11 +45,11 @@ internal class CoreCommandService
 
         void ShowServerStatus()
         {
-            var uptime = DateTime.Now - System.Diagnostics.Process.GetCurrentProcess().StartTime;
+            var uptime = DateTime.Now - Process.GetCurrentProcess().StartTime;
             ThreadPool.GetAvailableThreads(out var availableWorkerThreads, out var availableCompletionPortThreads);
             ThreadPool.GetMaxThreads(out var maxWorkerThreads, out var maxCompletionPortThreads);
             var busyWorkerThreads = maxWorkerThreads - availableWorkerThreads;
-            var processThreadCount = System.Diagnostics.Process.GetCurrentProcess().Threads.Count;
+            var processThreadCount = Process.GetCurrentProcess().Threads.Count;
 
             var output = string.Join("\n", [
                 $"Uptime: {uptime.Days}d {uptime.Hours}h {uptime.Minutes}m {uptime.Seconds}s",
@@ -89,68 +88,6 @@ internal class CoreCommandService
                 $"  - Latency Mode: {GCSettings.LatencyMode}"
             ]);
             logger.LogInformation("{Output}", output);
-
-            if (Interlocked.CompareExchange(ref _memoryScanInProgress, 1, 0) != 0)
-            {
-                context.Reply("A per-plugin heap scan is already running, please wait for it to finish.");
-                return;
-            }
-
-            logger.LogInformation("Scanning managed heap for a per-plugin breakdown, this can take a few seconds on a busy server...");
-
-            _ = Task.Run(RunPluginHeapScan);
-        }
-
-        void RunPluginHeapScan()
-        {
-            var stopwatch = Stopwatch.StartNew();
-
-            try
-            {
-                var assemblyNameToPlugin = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-                foreach (var plugin in pluginManager.GetPlugins())
-                {
-                    if (plugin.Status != PluginStatus.Loaded || plugin.Plugin == null || plugin.Metadata == null)
-                        continue;
-
-                    var alc = AssemblyLoadContext.GetLoadContext(plugin.Plugin.GetType().Assembly);
-                    if (alc == null)
-                        continue;
-
-                    foreach (var asm in alc.Assemblies)
-                    {
-                        var name = asm.GetName().Name;
-                        if (!string.IsNullOrEmpty(name))
-                            assemblyNameToPlugin[name] = plugin.Metadata.Id;
-                    }
-                }
-
-                var byPlugin = PluginHeapSnapshot.Take(assemblyNameToPlugin, rootDirService.GetTempRoot());
-
-                var table = new Table()
-                    .Title($"Per-Plugin Heap Breakdown (scanned in {stopwatch.ElapsedMilliseconds} ms)")
-                    .AddColumn("Plugin")
-                    .AddColumn("Live Total")
-                    .AddColumn("Live Old (Gen2+LOH)")
-                    .AddColumn("Dead (uncollected)");
-
-                foreach (var (key, stats) in byPlugin.OrderByDescending(kv => kv.Value.LiveTotal))
-                    _ = table.AddRow(
-                        Markup.Escape(key),
-                        $"{stats.LiveTotal / 1024.0f / 1024.0f:0.00} MB",
-                        $"{stats.LiveOld / 1024.0f / 1024.0f:0.00} MB",
-                        $"{stats.DeadTotal / 1024.0f / 1024.0f:0.00} MB");
-
-                AnsiConsole.Write(table);
-            }
-            catch (Exception e)
-            {
-                logger.LogWarning(e, "Failed to walk the managed heap for a per-plugin breakdown");
-            }
-            finally
-            {
-                Volatile.Write(ref _memoryScanInProgress, 0);
-            }
         }
 
         void ShowCredits()
