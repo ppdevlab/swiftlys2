@@ -1,6 +1,12 @@
 name: Build
 
-on: [push, workflow_dispatch, pull_request]
+on:
+  push:
+    branches:
+      - master
+      - beta
+  workflow_dispatch:
+  pull_request:
 
 env:
   XMAKE_ROOT: y
@@ -380,6 +386,13 @@ jobs:
         tag_name: ${{ env.TAG_NAME }}
         name: Release v${{ needs.versioning.outputs.semVer }}
         body: ${{ needs.versioning.outputs.semVer  }}
+
+    - name: Trigger API docs build
+      uses: peter-evans/repository-dispatch@v3
+      with:
+        token: ${{ secrets.SWIFTLYCHAN_PAT }}
+        repository: swiftly-solution/swiftlys2.net-docs
+        event-type: swiftlys2-updated
 
     - name: Get commit summary for beta
       if: github.ref == 'refs/heads/beta'

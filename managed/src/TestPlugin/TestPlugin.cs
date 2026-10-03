@@ -16,7 +16,6 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using SwiftlyS2.Shared.Events;
 using SwiftlyS2.Shared.Memory;
-using Dapper;
 using SwiftlyS2.Shared.Sounds;
 using SwiftlyS2.Shared.EntitySystem;
 using SwiftlyS2.Shared.Players;
@@ -25,6 +24,7 @@ using SwiftlyS2.Shared.SteamAPI;
 using SwiftlyS2.Core.Menus.OptionsBase;
 using SwiftlyS2.Shared.Trace;
 using System.Diagnostics;
+using System.Reflection;
 
 namespace TestPlugin;
 
@@ -134,9 +134,17 @@ public class TestPlugin : BasePlugin
     private volatile bool _simRunning;
     private static readonly char[] _simChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ".ToCharArray();
 
+    private Thread? _profilerStressThread;
+    private volatile bool _profilerStressRunning;
+
     public TestPlugin( ISwiftlyCore core ) : base(core)
     {
         Console.WriteLine("[TestPlugin] TestPlugin constructed successfully!");
+
+        core.GameHooks.Controller.ProcessUsercmds.Pre += ( ref @event ) =>
+        {
+            var usercmds = @event.Params.Usercmds;
+        };
 
         core.GameHooks.Movement.PlayerMove.Pre += ( ref @event ) =>
         {
@@ -199,23 +207,54 @@ public class TestPlugin : BasePlugin
         var connectionInfo = Core.Database.GetConnectionInfo(connectionName);
         Core.Logger.LogInformation("[Database] Connection info: {Info}", connectionInfo);
 
-        try
-        {
-            using var connection = Core.Database.GetConnection(connectionName);
-            connection.Open();
-            Core.Logger.LogInformation("[Database] Connection opened successfully!");
+        using var conn = Core.Database.GetConnection(connectionName);
+    }
 
-            // Simple query test
-            var result = connection.QueryFirstOrDefault<int>("SELECT 1");
-            Core.Logger.LogInformation("[Database] Query 'SELECT 1' returned: {Result}", result);
-
-            connection.Close();
-            Core.Logger.LogInformation("[Database] Connection closed.");
-        }
-        catch (Exception ex)
+    [Command("analyzenettrace")]
+    public void AnalyzeNetTraceCommand( ICommandContext context )
+    {
+        if (context.Args.Length < 1)
         {
-            Core.Logger.LogError(ex, "[Database] Connection failed: {Message}", ex.Message);
+            context.Reply("Usage: analyzenettrace <path-to-.nettrace>");
+            return;
         }
+
+        var path = context.Args[0];
+        if (!File.Exists(path))
+        {
+            context.Reply($"File not found: {path}");
+            return;
+        }
+
+        context.Reply($"Analyzing {path}...");
+
+        Task.Run(() =>
+        {
+            try
+            {
+                var hostDir = AppContext.BaseDirectory;
+                var profilerDll = Path.Combine(hostDir, "..", "SwiftlyS2.Profiler.dll");
+                if (!File.Exists(profilerDll))
+                {
+                    Core.Logger.LogWarning("[NetTrace] SwiftlyS2.Profiler.dll not found at {Path}", profilerDll);
+                    return;
+                }
+
+                var asm = Assembly.LoadFrom(profilerDll);
+                _ = asm.GetType("SwiftlyS2.Core.Services.ProfilerAnalyzer")!
+                    .GetMethod("Analyze")!
+                    .Invoke(null, [path, Core.Logger]);
+
+                var summaryPath = path.EndsWith(".nettrace", StringComparison.OrdinalIgnoreCase)
+                    ? path.Replace(".nettrace", ".summary.txt")
+                    : path + ".summary.txt";
+                Core.Logger.LogInformation("[NetTrace] Analysis complete → {Path}", summaryPath);
+            }
+            catch (Exception ex)
+            {
+                Core.Logger.LogError(ex, "[NetTrace] Analysis failed.");
+            }
+        });
     }
 
     [GameEventHandler(HookMode.Pre)]
@@ -544,6 +583,16 @@ public class TestPlugin : BasePlugin
         um.Send();
 
         throw new ObjectDisposedException(nameof(CUserMessageShake));
+    }
+
+    [Command("qc")]
+    public void TestCommandQC(ICommandContext context)
+    {
+        var player = context.Sender!;
+        Core.ConVar.QueryClient(player.PlayerID, context.Args[0], (value) =>
+        {
+            player.SendChat($"QueryClient result for '{context.Args[0]}': {value} - {Core.Engine.GlobalVars.TickCount}");
+        });
     }
 
     [Command("hh")]
@@ -1889,9 +1938,69 @@ public class TestPlugin : BasePlugin
         Core.Logger.LogInformation("[SimLog] Stopped.");
     }
 
+    [Command("profilerstress")]
+    public void ProfilerStressCommand( ICommandContext context )
+    {
+        if (_profilerStressRunning)
+        {
+            Core.Logger.LogInformation("[ProfilerStress] Already running.");
+            return;
+        }
+
+        var args = context.Args;
+        var ratePerSec = args.Length > 1 && int.TryParse(args[1], out var r) && r > 0 ? r : 50000;
+        var perTick = Math.Max(1, ratePerSec / 100);
+
+        _profilerStressRunning = true;
+        _profilerStressThread = new Thread(() =>
+        {
+            long total = 0;
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            var lastReport = sw.ElapsedMilliseconds;
+
+            while (_profilerStressRunning)
+            {
+                for (var i = 0; i < perTick && _profilerStressRunning; i++)
+                {
+                    Core.Profiler.RecordTime("stress_event", 0.01);
+                    total++;
+                }
+
+                if (sw.ElapsedMilliseconds - lastReport >= 1000)
+                {
+                    lastReport = sw.ElapsedMilliseconds;
+                    Core.Logger.LogInformation("[ProfilerStress] {Total} events emitted so far (~{Rate}/sec target).", total, ratePerSec);
+                }
+
+                Thread.Sleep(10);
+            }
+
+            Core.Logger.LogInformation("[ProfilerStress] Stopped, {Total} events emitted total.", total);
+        })
+        {
+            IsBackground = true,
+            Name = "ProfilerStress"
+        };
+        _profilerStressThread.Start();
+        Core.Logger.LogInformation("[ProfilerStress] Started, targeting ~{Rate} events/sec. Make sure 'sw profiler enable 1' was run first, then use 'sw profiler save' to time the summary generation.", ratePerSec);
+    }
+
+    [Command("profilerstressstop")]
+    public void ProfilerStressStopCommand( ICommandContext context )
+    {
+        if (!_profilerStressRunning)
+        {
+            Core.Logger.LogInformation("[ProfilerStress] Not running.");
+            return;
+        }
+        _profilerStressRunning = false;
+        Core.Logger.LogInformation("[ProfilerStress] Stopping...");
+    }
+
     public override void Unload()
     {
         _simRunning = false;
+        _profilerStressRunning = false;
         Console.WriteLine("TestPlugin unloaded");
     }
 }
