@@ -58,7 +58,7 @@ internal static class SchedulerManager
             batchCount--;
             try
             {
-                task.Invoke();
+                task();
             }
             catch (Exception ex)
             {
@@ -117,7 +117,7 @@ internal static class SchedulerManager
             batchCount--;
             try
             {
-                task.Invoke();
+                task();
             }
             catch (Exception ex)
             {

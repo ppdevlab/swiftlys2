@@ -585,6 +585,16 @@ public class TestPlugin : BasePlugin
         throw new ObjectDisposedException(nameof(CUserMessageShake));
     }
 
+    [Command("qc")]
+    public void TestCommandQC(ICommandContext context)
+    {
+        var player = context.Sender!;
+        Core.ConVar.QueryClient(player.PlayerID, context.Args[0], (value) =>
+        {
+            player.SendChat($"QueryClient result for '{context.Args[0]}': {value} - {Core.Engine.GlobalVars.TickCount}");
+        });
+    }
+
     [Command("hh")]
     public unsafe void TestCommandHH( ICommandContext context )
     {

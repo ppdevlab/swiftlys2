@@ -101,7 +101,6 @@ internal static class Bootstrap
                 _ = services
                     .AddProfileService()
                     .AddConfigurationService()
-                    .AddTestService()
                     .AddRootDirService()
                     .AddDataDirectoryService()
                     .AddPluginManager()
