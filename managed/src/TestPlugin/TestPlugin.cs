@@ -382,11 +382,6 @@ public class TestPlugin : BasePlugin
         //     Console.WriteLine($"PostThink -> {@event.PlayerPawn.OriginalController.Value?.PlayerName}");
         // };
 
-        // Core.Engine.ExecuteCommandWithBuffer("@ping", ( buffer ) =>
-        // {
-        //     Console.WriteLine($"pong: {buffer}");
-        // });
-
         // _ = Core.GameEvent.HookPre<EventShowSurvivalRespawnStatus>(@event =>
         // {
         //     @event.LocToken = "test";
@@ -834,15 +829,6 @@ public class TestPlugin : BasePlugin
     {
         Console.WriteLine(context.Sender!.SteamID);
         Console.WriteLine(context.Sender!.UnauthorizedSteamID);
-    }
-
-    [Command("tt7")]
-    public void TestCommand7( ICommandContext _ )
-    {
-        Core.Engine.ExecuteCommandWithBuffer("@ping", ( buffer ) => { Console.WriteLine($"pong: {buffer}"); });
-        Core.Engine.ExecuteCommandWithBuffer("@ping2", ( buffer ) => { Console.WriteLine($"pong2: {buffer}"); });
-        Core.Engine.ExecuteCommandWithBuffer("@ping3", ( buffer ) => { Console.WriteLine($"pong3: {buffer}"); });
-        Core.Engine.ExecuteCommandWithBuffer("@ping4", ( buffer ) => { Console.WriteLine($"pong4: {buffer}"); });
     }
 
     [ClientNetMessageHandler]
@@ -1649,13 +1635,6 @@ public class TestPlugin : BasePlugin
         }
     }
 
-
-    [Command("ecwb")]
-    public void ECWBCommand( ICommandContext _ )
-    {
-        Core.Engine.ExecuteCommandWithBuffer("cs2f_use_old_push 1", ( buffer ) => Core.Logger.LogWarning($"cs2f_use_old_push:\n{buffer}"));
-        Core.Scheduler.NextTick(() => Core.Engine.ExecuteCommandWithBuffer("map_showbombradius", ( buffer ) => Core.Logger.LogWarning($"map_showbombradius:\n{buffer}")));
-    }
 
     [Command("ex1")]
     public void DeepExceptionCommand( ICommandContext _ )
