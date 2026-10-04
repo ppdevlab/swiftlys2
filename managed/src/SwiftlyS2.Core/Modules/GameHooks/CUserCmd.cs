@@ -7,17 +7,13 @@ using SwiftlyS2.Shared.SchemaDefinitions;
 
 namespace SwiftlyS2.Core.GameHooks;
 
-internal struct CUserCmd : IUserCmd, IDisposable
+internal class CUserCmd : IUserCmd, IDisposable
 {
     private bool _disposed = false;
     private CSGOUserCmdPBImpl? _csgoUserCmd = null;
     private CInButtonStateImpl? _buttonState = null;
 
-    public CUserCmd()
-    {
-    }
-
-    public required nint Address { get; init; }
+    public required nint Address { get; internal set; }
 
     public uint CommandNumber {
         get {
