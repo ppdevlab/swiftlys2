@@ -330,6 +330,17 @@ internal static class NativeGameEvents
         }
     }
 
+    private unsafe static delegate* unmanaged<byte*, void> _UnregisterListener;
+
+    public unsafe static void UnregisterListener(string eventName)
+    {
+        using var eventNameStr = new ScopedCString(eventName);
+        fixed (byte* eventNameBufferPtr = eventNameStr)
+        {
+            _UnregisterListener(eventNameBufferPtr);
+        }
+    }
+
     private unsafe static delegate* unmanaged<nint, void> _SetListenerPreHandler;
 
     /// <summary>

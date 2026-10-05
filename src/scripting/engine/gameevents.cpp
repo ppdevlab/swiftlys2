@@ -205,21 +205,26 @@ void Bridge_GameEvents_RegisterListener(const char* eventName)
     g_pGameEventManager->RegisterGameEventListener(eventName);
 }
 
+typedef int (*GameEventCallbackType)(uint32_t hash, void* event, bool* dont_broadcast);
+
+void Bridge_GameEvents_UnregisterListener(const char* eventName)
+{
+    g_pGameEventManager->UnregisterGameEventListener(eventName);
+}
+
 void Bridge_GameEvents_SetListenerPreHandler(void* callback_ptr)
 {
-    g_pGameEventManager->SetGameEventFireHandler([callback_ptr](std::string& event_name, IGameEvent* event, bool& dont_broadcast, uint32_t& hash) -> int
+    g_pGameEventManager->SetGameEventFireHandler([callback_ptr](IGameEvent* event, bool& dont_broadcast, uint32_t hash) -> int
         {
-            typedef int (*CallbackType)(uint32_t hash, void* event, bool* dont_broadcast);
-            return reinterpret_cast<CallbackType>(callback_ptr)(hash, event, &dont_broadcast);
+            return reinterpret_cast<GameEventCallbackType>(callback_ptr)(hash, event, &dont_broadcast);
         });
 }
 
 void Bridge_GameEvents_SetListenerPostHandler(void* callback_ptr)
 {
-    g_pGameEventManager->SetPostGameEventFireHandler([callback_ptr](std::string& event_name, IGameEvent* event, bool& dont_broadcast, uint32_t& hash) -> int
+    g_pGameEventManager->SetPostGameEventFireHandler([callback_ptr](IGameEvent* event, bool& dont_broadcast, uint32_t hash) -> int
         {
-            typedef int (*CallbackType)(uint32_t hash, void* event, bool* dont_broadcast);
-            return reinterpret_cast<CallbackType>(callback_ptr)(hash, event, &dont_broadcast);
+            return reinterpret_cast<GameEventCallbackType>(callback_ptr)(hash, event, &dont_broadcast);
         });
 }
 
@@ -307,6 +312,7 @@ DEFINE_NATIVE("GameEvents.HasKey", Bridge_GameEvents_HasKey);
 DEFINE_NATIVE("GameEvents.IsReliable", Bridge_GameEvents_IsReliable);
 DEFINE_NATIVE("GameEvents.IsLocal", Bridge_GameEvents_IsLocal);
 DEFINE_NATIVE("GameEvents.RegisterListener", Bridge_GameEvents_RegisterListener);
+DEFINE_NATIVE("GameEvents.UnregisterListener", Bridge_GameEvents_UnregisterListener);
 DEFINE_NATIVE("GameEvents.SetListenerPreHandler", Bridge_GameEvents_SetListenerPreHandler);
 DEFINE_NATIVE("GameEvents.SetListenerPostHandler", Bridge_GameEvents_SetListenerPostHandler);
 DEFINE_NATIVE("GameEvents.CreateEvent", Bridge_GameEvents_CreateEvent);

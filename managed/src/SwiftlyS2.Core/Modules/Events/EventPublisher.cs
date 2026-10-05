@@ -231,7 +231,7 @@ internal static class EventPublisher
     {
         try
         {
-            return GameEventService.DispatchPreEvent(hash, pEvent, pDontBroadcast);
+            return GameEventDispatcher.DispatchPre(hash, pEvent, pDontBroadcast);
         }
         catch (Exception e)
         {
@@ -246,7 +246,7 @@ internal static class EventPublisher
     {
         try
         {
-            return GameEventService.DispatchPostEvent(hash, pEvent, pDontBroadcast);
+            return GameEventDispatcher.DispatchPost(hash, pEvent, pDontBroadcast);
         }
         catch (Exception e)
         {

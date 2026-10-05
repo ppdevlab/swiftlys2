@@ -27,6 +27,7 @@ bool HasKey = ptr _event, string key
 bool IsReliable = ptr _event
 bool IsLocal = ptr _event
 void RegisterListener = string eventName
+void UnregisterListener = string eventName
 void SetListenerPreHandler = ptr callback // the callback should receive the following: uint32 eventNameHash, IntPtr gameEvent, bool* dontBroadcast, return HookResult int
 void SetListenerPostHandler = ptr callback // the callback should receive the following: uint32 eventNameHash, IntPtr gameEvent, bool* dontBroadcast, return HookResult int
 ptr CreateEvent = string eventName
