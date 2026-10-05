@@ -20,20 +20,6 @@ internal static class Bootstrap
 {
     // how tf i forgot services can be collected hahahahahahahhaahhahaa FUCK
     private static IHost? sw2Host;
-    private static nint SteamAPIDLLResolver(string libraryName)
-    {
-        if (OperatingSystem.IsWindows())
-        {
-            libraryName += "64";
-        }
-
-        if (NativeLibrary.TryLoad(libraryName, out var handle))
-            return handle;
-        if (NativeLibrary.TryLoad("lib"+libraryName, out handle))
-            return handle;
-
-        return 0;
-    }
 
     public static void Start( IntPtr nativeTable, int nativeTableSize, string basePath, string logPath )
     {
@@ -54,7 +40,7 @@ internal static class Bootstrap
         Environment.SetEnvironmentVariable("SWIFTLY_MANAGED_ROOT", basePath);
         Environment.SetEnvironmentVariable("SWIFTLY_MANAGED_LOG", logPath);
         NativeBinding.BindNatives(nativeTable, nativeTableSize);
-        NativeMethodsBinder.BindAll(SteamAPIDLLResolver("steam_api"));
+        NativeMethodsBinder.BindAll(NativeLibrary.Load(OperatingSystem.IsWindows() ? "steam_api64.dll" : "libsteam_api.so"));
         GlobalLocalization.InitializeFromCore(basePath);
 
         EventPublisher.Register();
