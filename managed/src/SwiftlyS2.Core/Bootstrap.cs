@@ -20,11 +20,9 @@ internal static class Bootstrap
 {
     // how tf i forgot services can be collected hahahahahahahhaahhahaa FUCK
     private static IHost? sw2Host;
-    private unsafe delegate void SetStackTraceCallbackDelegate( delegate* unmanaged< byte*, int, int > callback );
-
-    private static IntPtr SteamAPIDLLResolver( string libraryName, Assembly assembly, DllImportSearchPath? searchPath )
+    private static nint SteamAPIDLLResolver(string libraryName)
     {
-        if (libraryName == "steam_api" || libraryName == "sdkencryptedappticket")
+        if (libraryName == "steam_api")
         {
             if (OperatingSystem.IsWindows())
             {
@@ -37,7 +35,7 @@ internal static class Bootstrap
             }
         }
 
-        return IntPtr.Zero;
+        return 0;
     }
 
     public static void Start( IntPtr nativeTable, int nativeTableSize, string basePath, string logPath )
@@ -59,7 +57,7 @@ internal static class Bootstrap
         Environment.SetEnvironmentVariable("SWIFTLY_MANAGED_ROOT", basePath);
         Environment.SetEnvironmentVariable("SWIFTLY_MANAGED_LOG", logPath);
         NativeBinding.BindNatives(nativeTable, nativeTableSize);
-        NativeLibrary.SetDllImportResolver(typeof(NativeMethods).Assembly, SteamAPIDLLResolver);
+        NativeMethodsBinder.BindAll(SteamAPIDLLResolver("steam_api"));
         GlobalLocalization.InitializeFromCore(basePath);
 
         EventPublisher.Register();
