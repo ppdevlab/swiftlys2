@@ -26,6 +26,18 @@ internal static class EventPublisher
     private static int consoleOutputSubscriberCount;
     private static ulong? consoleOutputListenerId;
 
+    internal static readonly NativeListener ConVarValueChangedListener = new(
+        static () => { unsafe { return NativeConvars.AddGlobalChangeListener((nint)(delegate* unmanaged< nint, int, nint, nint, void >)&OnConVarValueChanged); } },
+        NativeConvars.RemoveGlobalChangeListener);
+
+    internal static readonly NativeListener ConVarCreatedListener = new(
+        static () => { unsafe { return NativeConvars.AddConvarCreatedListener((nint)(delegate* unmanaged< nint, void >)&OnConVarCreated); } },
+        NativeConvars.RemoveConvarCreatedListener);
+
+    internal static readonly NativeListener ConCommandCreatedListener = new(
+        static () => { unsafe { return NativeConvars.AddConCommandCreatedListener((nint)(delegate* unmanaged< nint, void >)&OnConCommandCreated); } },
+        NativeConvars.RemoveConCommandCreatedListener);
+
     public static void Subscribe( EventSubscriber subscriber )
     {
         lock (subscribersLock)
@@ -65,9 +77,6 @@ internal static class EventPublisher
             NativeEvents.RegisterOnPrecacheResourceCallback((nint)(delegate* unmanaged< nint, void >)&OnPrecacheResource);
             NativeEvents.RegisterOnStartupServerCallback((nint)(delegate* unmanaged< void >)&OnStartupServer);
             NativeEvents.RegisterOnClientVoiceCallback((nint)(delegate* unmanaged< int, void >)&OnClientVoice);
-            _ = NativeConvars.AddConvarCreatedListener((nint)(delegate* unmanaged< nint, void >)&OnConVarCreated);
-            _ = NativeConvars.AddConCommandCreatedListener((nint)(delegate* unmanaged< nint, void >)&OnConCommandCreated);
-            _ = NativeConvars.AddGlobalChangeListener((nint)(delegate* unmanaged< nint, int, nint, nint, void >)&OnConVarValueChanged);
             _ = NativeConvars.AddQueryClientCvarCallback((nint)(delegate* unmanaged< int, nint, nint, void >)&ConVarQueryCallback);
             NativeCommands.SetCommandHandler((nint)(delegate* unmanaged< nint, int, nint, nint, nint, byte, void >)&OnCommandDispatch);
             NativeNetMessages.SetNetMessageServerHook((nint)(delegate* unmanaged< nint, int, nint, int >)&OnNetMessageServerDispatch);

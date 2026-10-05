@@ -25,6 +25,7 @@
     <PlatformTarget>x64</PlatformTarget>
     <NoWarn>$(NoWarn);CS1591;CS9107</NoWarn>
     <LangVersion>preview</LangVersion>
+    <DisableRuntimeMarshalling>true</DisableRuntimeMarshalling>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
