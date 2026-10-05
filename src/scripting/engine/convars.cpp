@@ -152,29 +152,29 @@ void Bridge_Convars_CreateConvarDouble(const char* convarName, int cvarType, uin
     g_pConvarManager->CreateConvar(convarName, (EConVarType)cvarType, cvarFlags, helpMessage, value, minValueOptional, maxValueOptional);
 }
 
-void Bridge_Convars_CreateConvarColor(const char* convarName, int cvarType, uint64_t cvarFlags, const char* helpMessage, Color value, Color* minValue, Color* maxValue)
+void Bridge_Convars_CreateConvarColor(const char* convarName, int cvarType, uint64_t cvarFlags, const char* helpMessage, const Color* value, Color* minValue, Color* maxValue)
 {
-    g_pConvarManager->CreateConvar(convarName, (EConVarType)cvarType, cvarFlags, helpMessage, value);
+    g_pConvarManager->CreateConvar(convarName, (EConVarType)cvarType, cvarFlags, helpMessage, *value);
 }
 
-void Bridge_Convars_CreateConvarVector2D(const char* convarName, int cvarType, uint64_t cvarFlags, const char* helpMessage, Vector2D value, Vector2D* minValue, Vector2D* maxValue)
+void Bridge_Convars_CreateConvarVector2D(const char* convarName, int cvarType, uint64_t cvarFlags, const char* helpMessage, const Vector2D* value, Vector2D* minValue, Vector2D* maxValue)
 {
-    g_pConvarManager->CreateConvar(convarName, (EConVarType)cvarType, cvarFlags, helpMessage, value);
+    g_pConvarManager->CreateConvar(convarName, (EConVarType)cvarType, cvarFlags, helpMessage, *value);
 }
 
-void Bridge_Convars_CreateConvarVector(const char* convarName, int cvarType, uint64_t cvarFlags, const char* helpMessage, Vector value, Vector* minValue, Vector* maxValue)
+void Bridge_Convars_CreateConvarVector(const char* convarName, int cvarType, uint64_t cvarFlags, const char* helpMessage, const Vector* value, Vector* minValue, Vector* maxValue)
 {
-    g_pConvarManager->CreateConvar(convarName, (EConVarType)cvarType, cvarFlags, helpMessage, value);
+    g_pConvarManager->CreateConvar(convarName, (EConVarType)cvarType, cvarFlags, helpMessage, *value);
 }
 
-void Bridge_Convars_CreateConvarVector4D(const char* convarName, int cvarType, uint64_t cvarFlags, const char* helpMessage, Vector4D value, Vector4D* minValue, Vector4D* maxValue)
+void Bridge_Convars_CreateConvarVector4D(const char* convarName, int cvarType, uint64_t cvarFlags, const char* helpMessage, const Vector4D* value, Vector4D* minValue, Vector4D* maxValue)
 {
-    g_pConvarManager->CreateConvar(convarName, (EConVarType)cvarType, cvarFlags, helpMessage, value);
+    g_pConvarManager->CreateConvar(convarName, (EConVarType)cvarType, cvarFlags, helpMessage, *value);
 }
 
-void Bridge_Convars_CreateConvarQAngle(const char* convarName, int cvarType, uint64_t cvarFlags, const char* helpMessage, QAngle value, QAngle* minValue, QAngle* maxValue)
+void Bridge_Convars_CreateConvarQAngle(const char* convarName, int cvarType, uint64_t cvarFlags, const char* helpMessage, const QAngle* value, QAngle* minValue, QAngle* maxValue)
 {
-    g_pConvarManager->CreateConvar(convarName, (EConVarType)cvarType, cvarFlags, helpMessage, value);
+    g_pConvarManager->CreateConvar(convarName, (EConVarType)cvarType, cvarFlags, helpMessage, *value);
 }
 
 void Bridge_Convars_CreateConvarString(const char* convarName, int cvarType, uint64_t cvarFlags, const char* helpMessage, const char* value, const char* minValue, const char* maxValue)

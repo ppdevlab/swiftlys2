@@ -96,29 +96,29 @@ CUtlStringToken Bridge_CEntityKeyValues_GetStringToken(void* keyvalues, const ch
     return ((CEntityKeyValues*)keyvalues)->GetStringToken(keyName);
 }
 
-Color Bridge_CEntityKeyValues_GetColor(void* keyvalues, const char* keyName)
+void Bridge_CEntityKeyValues_GetColor(Color* out, void* keyvalues, const char* keyName)
 {
-    return ((CEntityKeyValues*)keyvalues)->GetColor(keyName);
+    *out = ((CEntityKeyValues*)keyvalues)->GetColor(keyName);
 }
 
-Vector Bridge_CEntityKeyValues_GetVector(void* keyvalues, const char* keyName)
+void Bridge_CEntityKeyValues_GetVector(Vector* out, void* keyvalues, const char* keyName)
 {
-    return ((CEntityKeyValues*)keyvalues)->GetVector(keyName);
+    *out = ((CEntityKeyValues*)keyvalues)->GetVector(keyName);
 }
 
-Vector2D Bridge_CEntityKeyValues_GetVector2D(void* keyvalues, const char* keyName)
+void Bridge_CEntityKeyValues_GetVector2D(Vector2D* out, void* keyvalues, const char* keyName)
 {
-    return ((CEntityKeyValues*)keyvalues)->GetVector2D(keyName);
+    *out = ((CEntityKeyValues*)keyvalues)->GetVector2D(keyName);
 }
 
-Vector4D Bridge_CEntityKeyValues_GetVector4D(void* keyvalues, const char* keyName)
+void Bridge_CEntityKeyValues_GetVector4D(Vector4D* out, void* keyvalues, const char* keyName)
 {
-    return ((CEntityKeyValues*)keyvalues)->GetVector4D(keyName);
+    *out = ((CEntityKeyValues*)keyvalues)->GetVector4D(keyName);
 }
 
-QAngle Bridge_CEntityKeyValues_GetQAngle(void* keyvalues, const char* keyName)
+void Bridge_CEntityKeyValues_GetQAngle(QAngle* out, void* keyvalues, const char* keyName)
 {
-    return ((CEntityKeyValues*)keyvalues)->GetQAngle(keyName);
+    *out = ((CEntityKeyValues*)keyvalues)->GetQAngle(keyName);
 }
 
 void Bridge_CEntityKeyValues_SetBool(void* keyvalues, const char* keyName, bool value)
@@ -171,29 +171,29 @@ void Bridge_CEntityKeyValues_SetStringToken(void* keyvalues, const char* keyName
     ((CEntityKeyValues*)keyvalues)->SetStringToken(keyName, value);
 }
 
-void Bridge_CEntityKeyValues_SetColor(void* keyvalues, const char* keyName, Color value)
+void Bridge_CEntityKeyValues_SetColor(void* keyvalues, const char* keyName, const Color* value)
 {
-    ((CEntityKeyValues*)keyvalues)->SetColor(keyName, value);
+    ((CEntityKeyValues*)keyvalues)->SetColor(keyName, *value);
 }
 
-void Bridge_CEntityKeyValues_SetVector(void* keyvalues, const char* keyName, Vector value)
+void Bridge_CEntityKeyValues_SetVector(void* keyvalues, const char* keyName, const Vector* value)
 {
-    ((CEntityKeyValues*)keyvalues)->SetVector(keyName, value);
+    ((CEntityKeyValues*)keyvalues)->SetVector(keyName, *value);
 }
 
-void Bridge_CEntityKeyValues_SetVector2D(void* keyvalues, const char* keyName, Vector2D value)
+void Bridge_CEntityKeyValues_SetVector2D(void* keyvalues, const char* keyName, const Vector2D* value)
 {
-    ((CEntityKeyValues*)keyvalues)->SetVector2D(keyName, value);
+    ((CEntityKeyValues*)keyvalues)->SetVector2D(keyName, *value);
 }
 
-void Bridge_CEntityKeyValues_SetVector4D(void* keyvalues, const char* keyName, Vector4D value)
+void Bridge_CEntityKeyValues_SetVector4D(void* keyvalues, const char* keyName, const Vector4D* value)
 {
-    ((CEntityKeyValues*)keyvalues)->SetVector4D(keyName, value);
+    ((CEntityKeyValues*)keyvalues)->SetVector4D(keyName, *value);
 }
 
-void Bridge_CEntityKeyValues_SetQAngle(void* keyvalues, const char* keyName, QAngle value)
+void Bridge_CEntityKeyValues_SetQAngle(void* keyvalues, const char* keyName, const QAngle* value)
 {
-    ((CEntityKeyValues*)keyvalues)->SetQAngle(keyName, value);
+    ((CEntityKeyValues*)keyvalues)->SetQAngle(keyName, *value);
 }
 
 bool Bridge_CEntityKeyValues_HasKey(void* keyvalues, const char* keyName)

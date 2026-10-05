@@ -233,7 +233,7 @@ internal static class NativeConvars
         }
     }
 
-    private unsafe static delegate* unmanaged<byte*, int, ulong, byte*, Color, nint, nint, void> _CreateConvarColor;
+    private unsafe static delegate* unmanaged<byte*, int, ulong, byte*, Color*, nint, nint, void> _CreateConvarColor;
 
     public unsafe static void CreateConvarColor(string cvarName, int cvarType, ulong cvarFlags, string helpMessage, Color defaultValue, nint minValue, nint maxValue)
     {
@@ -243,12 +243,12 @@ internal static class NativeConvars
         {
             fixed (byte* helpMessageBufferPtr = helpMessageStr)
             {
-                _CreateConvarColor(cvarNameBufferPtr, cvarType, cvarFlags, helpMessageBufferPtr, defaultValue, minValue, maxValue);
+                _CreateConvarColor(cvarNameBufferPtr, cvarType, cvarFlags, helpMessageBufferPtr, &defaultValue, minValue, maxValue);
             }
         }
     }
 
-    private unsafe static delegate* unmanaged<byte*, int, ulong, byte*, Vector2D, nint, nint, void> _CreateConvarVector2D;
+    private unsafe static delegate* unmanaged<byte*, int, ulong, byte*, Vector2D*, nint, nint, void> _CreateConvarVector2D;
 
     public unsafe static void CreateConvarVector2D(string cvarName, int cvarType, ulong cvarFlags, string helpMessage, Vector2D defaultValue, nint minValue, nint maxValue)
     {
@@ -258,12 +258,12 @@ internal static class NativeConvars
         {
             fixed (byte* helpMessageBufferPtr = helpMessageStr)
             {
-                _CreateConvarVector2D(cvarNameBufferPtr, cvarType, cvarFlags, helpMessageBufferPtr, defaultValue, minValue, maxValue);
+                _CreateConvarVector2D(cvarNameBufferPtr, cvarType, cvarFlags, helpMessageBufferPtr, &defaultValue, minValue, maxValue);
             }
         }
     }
 
-    private unsafe static delegate* unmanaged<byte*, int, ulong, byte*, Vector, nint, nint, void> _CreateConvarVector;
+    private unsafe static delegate* unmanaged<byte*, int, ulong, byte*, Vector*, nint, nint, void> _CreateConvarVector;
 
     public unsafe static void CreateConvarVector(string cvarName, int cvarType, ulong cvarFlags, string helpMessage, Vector defaultValue, nint minValue, nint maxValue)
     {
@@ -273,12 +273,12 @@ internal static class NativeConvars
         {
             fixed (byte* helpMessageBufferPtr = helpMessageStr)
             {
-                _CreateConvarVector(cvarNameBufferPtr, cvarType, cvarFlags, helpMessageBufferPtr, defaultValue, minValue, maxValue);
+                _CreateConvarVector(cvarNameBufferPtr, cvarType, cvarFlags, helpMessageBufferPtr, &defaultValue, minValue, maxValue);
             }
         }
     }
 
-    private unsafe static delegate* unmanaged<byte*, int, ulong, byte*, Vector4D, nint, nint, void> _CreateConvarVector4D;
+    private unsafe static delegate* unmanaged<byte*, int, ulong, byte*, Vector4D*, nint, nint, void> _CreateConvarVector4D;
 
     public unsafe static void CreateConvarVector4D(string cvarName, int cvarType, ulong cvarFlags, string helpMessage, Vector4D defaultValue, nint minValue, nint maxValue)
     {
@@ -288,12 +288,12 @@ internal static class NativeConvars
         {
             fixed (byte* helpMessageBufferPtr = helpMessageStr)
             {
-                _CreateConvarVector4D(cvarNameBufferPtr, cvarType, cvarFlags, helpMessageBufferPtr, defaultValue, minValue, maxValue);
+                _CreateConvarVector4D(cvarNameBufferPtr, cvarType, cvarFlags, helpMessageBufferPtr, &defaultValue, minValue, maxValue);
             }
         }
     }
 
-    private unsafe static delegate* unmanaged<byte*, int, ulong, byte*, QAngle, nint, nint, void> _CreateConvarQAngle;
+    private unsafe static delegate* unmanaged<byte*, int, ulong, byte*, QAngle*, nint, nint, void> _CreateConvarQAngle;
 
     public unsafe static void CreateConvarQAngle(string cvarName, int cvarType, ulong cvarFlags, string helpMessage, QAngle defaultValue, nint minValue, nint maxValue)
     {
@@ -303,7 +303,7 @@ internal static class NativeConvars
         {
             fixed (byte* helpMessageBufferPtr = helpMessageStr)
             {
-                _CreateConvarQAngle(cvarNameBufferPtr, cvarType, cvarFlags, helpMessageBufferPtr, defaultValue, minValue, maxValue);
+                _CreateConvarQAngle(cvarNameBufferPtr, cvarType, cvarFlags, helpMessageBufferPtr, &defaultValue, minValue, maxValue);
             }
         }
     }

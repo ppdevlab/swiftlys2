@@ -149,63 +149,68 @@ internal static class NativeCEntityKeyValues
         }
     }
 
-    private unsafe static delegate* unmanaged<nint, byte*, Color> _GetColor;
+    private unsafe static delegate* unmanaged<Color*, nint, byte*, void> _GetColor;
 
     public unsafe static Color GetColor(nint keyvalues, string key)
     {
         using var keyStr = new ScopedCString(key);
         fixed (byte* keyBufferPtr = keyStr)
         {
-            var ret = _GetColor(keyvalues, keyBufferPtr);
-            return ret;
+            Color returnValue = default;
+            _GetColor(&returnValue, keyvalues, keyBufferPtr);
+            return returnValue;
         }
     }
 
-    private unsafe static delegate* unmanaged<nint, byte*, Vector> _GetVector;
+    private unsafe static delegate* unmanaged<Vector*, nint, byte*, void> _GetVector;
 
     public unsafe static Vector GetVector(nint keyvalues, string key)
     {
         using var keyStr = new ScopedCString(key);
         fixed (byte* keyBufferPtr = keyStr)
         {
-            var ret = _GetVector(keyvalues, keyBufferPtr);
-            return ret;
+            Vector returnValue = default;
+            _GetVector(&returnValue, keyvalues, keyBufferPtr);
+            return returnValue;
         }
     }
 
-    private unsafe static delegate* unmanaged<nint, byte*, Vector2D> _GetVector2D;
+    private unsafe static delegate* unmanaged<Vector2D*, nint, byte*, void> _GetVector2D;
 
     public unsafe static Vector2D GetVector2D(nint keyvalues, string key)
     {
         using var keyStr = new ScopedCString(key);
         fixed (byte* keyBufferPtr = keyStr)
         {
-            var ret = _GetVector2D(keyvalues, keyBufferPtr);
-            return ret;
+            Vector2D returnValue = default;
+            _GetVector2D(&returnValue, keyvalues, keyBufferPtr);
+            return returnValue;
         }
     }
 
-    private unsafe static delegate* unmanaged<nint, byte*, Vector4D> _GetVector4D;
+    private unsafe static delegate* unmanaged<Vector4D*, nint, byte*, void> _GetVector4D;
 
     public unsafe static Vector4D GetVector4D(nint keyvalues, string key)
     {
         using var keyStr = new ScopedCString(key);
         fixed (byte* keyBufferPtr = keyStr)
         {
-            var ret = _GetVector4D(keyvalues, keyBufferPtr);
-            return ret;
+            Vector4D returnValue = default;
+            _GetVector4D(&returnValue, keyvalues, keyBufferPtr);
+            return returnValue;
         }
     }
 
-    private unsafe static delegate* unmanaged<nint, byte*, QAngle> _GetQAngle;
+    private unsafe static delegate* unmanaged<QAngle*, nint, byte*, void> _GetQAngle;
 
     public unsafe static QAngle GetQAngle(nint keyvalues, string key)
     {
         using var keyStr = new ScopedCString(key);
         fixed (byte* keyBufferPtr = keyStr)
         {
-            var ret = _GetQAngle(keyvalues, keyBufferPtr);
-            return ret;
+            QAngle returnValue = default;
+            _GetQAngle(&returnValue, keyvalues, keyBufferPtr);
+            return returnValue;
         }
     }
 
@@ -323,58 +328,58 @@ internal static class NativeCEntityKeyValues
         }
     }
 
-    private unsafe static delegate* unmanaged<nint, byte*, Color, void> _SetColor;
+    private unsafe static delegate* unmanaged<nint, byte*, Color*, void> _SetColor;
 
     public unsafe static void SetColor(nint keyvalues, string key, Color value)
     {
         using var keyStr = new ScopedCString(key);
         fixed (byte* keyBufferPtr = keyStr)
         {
-            _SetColor(keyvalues, keyBufferPtr, value);
+            _SetColor(keyvalues, keyBufferPtr, &value);
         }
     }
 
-    private unsafe static delegate* unmanaged<nint, byte*, Vector, void> _SetVector;
+    private unsafe static delegate* unmanaged<nint, byte*, Vector*, void> _SetVector;
 
     public unsafe static void SetVector(nint keyvalues, string key, Vector value)
     {
         using var keyStr = new ScopedCString(key);
         fixed (byte* keyBufferPtr = keyStr)
         {
-            _SetVector(keyvalues, keyBufferPtr, value);
+            _SetVector(keyvalues, keyBufferPtr, &value);
         }
     }
 
-    private unsafe static delegate* unmanaged<nint, byte*, Vector2D, void> _SetVector2D;
+    private unsafe static delegate* unmanaged<nint, byte*, Vector2D*, void> _SetVector2D;
 
     public unsafe static void SetVector2D(nint keyvalues, string key, Vector2D value)
     {
         using var keyStr = new ScopedCString(key);
         fixed (byte* keyBufferPtr = keyStr)
         {
-            _SetVector2D(keyvalues, keyBufferPtr, value);
+            _SetVector2D(keyvalues, keyBufferPtr, &value);
         }
     }
 
-    private unsafe static delegate* unmanaged<nint, byte*, Vector4D, void> _SetVector4D;
+    private unsafe static delegate* unmanaged<nint, byte*, Vector4D*, void> _SetVector4D;
 
     public unsafe static void SetVector4D(nint keyvalues, string key, Vector4D value)
     {
         using var keyStr = new ScopedCString(key);
         fixed (byte* keyBufferPtr = keyStr)
         {
-            _SetVector4D(keyvalues, keyBufferPtr, value);
+            _SetVector4D(keyvalues, keyBufferPtr, &value);
         }
     }
 
-    private unsafe static delegate* unmanaged<nint, byte*, QAngle, void> _SetQAngle;
+    private unsafe static delegate* unmanaged<nint, byte*, QAngle*, void> _SetQAngle;
 
     public unsafe static void SetQAngle(nint keyvalues, string key, QAngle value)
     {
         using var keyStr = new ScopedCString(key);
         fixed (byte* keyBufferPtr = keyStr)
         {
-            _SetQAngle(keyvalues, keyBufferPtr, value);
+            _SetQAngle(keyvalues, keyBufferPtr, &value);
         }
     }
 

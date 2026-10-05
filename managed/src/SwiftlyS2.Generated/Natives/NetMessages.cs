@@ -524,231 +524,239 @@ internal static class NativeNetMessages
         }
     }
 
-    private unsafe static delegate* unmanaged<nint, byte*, Vector2D> _GetVector2D;
+    private unsafe static delegate* unmanaged<Vector2D*, nint, byte*, void> _GetVector2D;
 
     public unsafe static Vector2D GetVector2D(nint netmsg, string fieldName)
     {
         using var fieldNameStr = new ScopedCString(fieldName);
         fixed (byte* fieldNameBufferPtr = fieldNameStr)
         {
-            var ret = _GetVector2D(netmsg, fieldNameBufferPtr);
-            return ret;
+            Vector2D returnValue = default;
+            _GetVector2D(&returnValue, netmsg, fieldNameBufferPtr);
+            return returnValue;
         }
     }
 
-    private unsafe static delegate* unmanaged<nint, byte*, int, Vector2D> _GetRepeatedVector2D;
+    private unsafe static delegate* unmanaged<Vector2D*, nint, byte*, int, void> _GetRepeatedVector2D;
 
     public unsafe static Vector2D GetRepeatedVector2D(nint netmsg, string fieldName, int index)
     {
         using var fieldNameStr = new ScopedCString(fieldName);
         fixed (byte* fieldNameBufferPtr = fieldNameStr)
         {
-            var ret = _GetRepeatedVector2D(netmsg, fieldNameBufferPtr, index);
-            return ret;
+            Vector2D returnValue = default;
+            _GetRepeatedVector2D(&returnValue, netmsg, fieldNameBufferPtr, index);
+            return returnValue;
         }
     }
 
-    private unsafe static delegate* unmanaged<nint, byte*, Vector2D, void> _SetVector2D;
+    private unsafe static delegate* unmanaged<nint, byte*, Vector2D*, void> _SetVector2D;
 
     public unsafe static void SetVector2D(nint netmsg, string fieldName, Vector2D value)
     {
         using var fieldNameStr = new ScopedCString(fieldName);
         fixed (byte* fieldNameBufferPtr = fieldNameStr)
         {
-            _SetVector2D(netmsg, fieldNameBufferPtr, value);
+            _SetVector2D(netmsg, fieldNameBufferPtr, &value);
         }
     }
 
-    private unsafe static delegate* unmanaged<nint, byte*, int, Vector2D, void> _SetRepeatedVector2D;
+    private unsafe static delegate* unmanaged<nint, byte*, int, Vector2D*, void> _SetRepeatedVector2D;
 
     public unsafe static void SetRepeatedVector2D(nint netmsg, string fieldName, int index, Vector2D value)
     {
         using var fieldNameStr = new ScopedCString(fieldName);
         fixed (byte* fieldNameBufferPtr = fieldNameStr)
         {
-            _SetRepeatedVector2D(netmsg, fieldNameBufferPtr, index, value);
+            _SetRepeatedVector2D(netmsg, fieldNameBufferPtr, index, &value);
         }
     }
 
-    private unsafe static delegate* unmanaged<nint, byte*, Vector2D, void> _AddVector2D;
+    private unsafe static delegate* unmanaged<nint, byte*, Vector2D*, void> _AddVector2D;
 
     public unsafe static void AddVector2D(nint netmsg, string fieldName, Vector2D value)
     {
         using var fieldNameStr = new ScopedCString(fieldName);
         fixed (byte* fieldNameBufferPtr = fieldNameStr)
         {
-            _AddVector2D(netmsg, fieldNameBufferPtr, value);
+            _AddVector2D(netmsg, fieldNameBufferPtr, &value);
         }
     }
 
-    private unsafe static delegate* unmanaged<nint, byte*, Vector> _GetVector;
+    private unsafe static delegate* unmanaged<Vector*, nint, byte*, void> _GetVector;
 
     public unsafe static Vector GetVector(nint netmsg, string fieldName)
     {
         using var fieldNameStr = new ScopedCString(fieldName);
         fixed (byte* fieldNameBufferPtr = fieldNameStr)
         {
-            var ret = _GetVector(netmsg, fieldNameBufferPtr);
-            return ret;
+            Vector returnValue = default;
+            _GetVector(&returnValue, netmsg, fieldNameBufferPtr);
+            return returnValue;
         }
     }
 
-    private unsafe static delegate* unmanaged<nint, byte*, int, Vector> _GetRepeatedVector;
+    private unsafe static delegate* unmanaged<Vector*, nint, byte*, int, void> _GetRepeatedVector;
 
     public unsafe static Vector GetRepeatedVector(nint netmsg, string fieldName, int index)
     {
         using var fieldNameStr = new ScopedCString(fieldName);
         fixed (byte* fieldNameBufferPtr = fieldNameStr)
         {
-            var ret = _GetRepeatedVector(netmsg, fieldNameBufferPtr, index);
-            return ret;
+            Vector returnValue = default;
+            _GetRepeatedVector(&returnValue, netmsg, fieldNameBufferPtr, index);
+            return returnValue;
         }
     }
 
-    private unsafe static delegate* unmanaged<nint, byte*, Vector, void> _SetVector;
+    private unsafe static delegate* unmanaged<nint, byte*, Vector*, void> _SetVector;
 
     public unsafe static void SetVector(nint netmsg, string fieldName, Vector value)
     {
         using var fieldNameStr = new ScopedCString(fieldName);
         fixed (byte* fieldNameBufferPtr = fieldNameStr)
         {
-            _SetVector(netmsg, fieldNameBufferPtr, value);
+            _SetVector(netmsg, fieldNameBufferPtr, &value);
         }
     }
 
-    private unsafe static delegate* unmanaged<nint, byte*, int, Vector, void> _SetRepeatedVector;
+    private unsafe static delegate* unmanaged<nint, byte*, int, Vector*, void> _SetRepeatedVector;
 
     public unsafe static void SetRepeatedVector(nint netmsg, string fieldName, int index, Vector value)
     {
         using var fieldNameStr = new ScopedCString(fieldName);
         fixed (byte* fieldNameBufferPtr = fieldNameStr)
         {
-            _SetRepeatedVector(netmsg, fieldNameBufferPtr, index, value);
+            _SetRepeatedVector(netmsg, fieldNameBufferPtr, index, &value);
         }
     }
 
-    private unsafe static delegate* unmanaged<nint, byte*, Vector, void> _AddVector;
+    private unsafe static delegate* unmanaged<nint, byte*, Vector*, void> _AddVector;
 
     public unsafe static void AddVector(nint netmsg, string fieldName, Vector value)
     {
         using var fieldNameStr = new ScopedCString(fieldName);
         fixed (byte* fieldNameBufferPtr = fieldNameStr)
         {
-            _AddVector(netmsg, fieldNameBufferPtr, value);
+            _AddVector(netmsg, fieldNameBufferPtr, &value);
         }
     }
 
-    private unsafe static delegate* unmanaged<nint, byte*, Color> _GetColor;
+    private unsafe static delegate* unmanaged<Color*, nint, byte*, void> _GetColor;
 
     public unsafe static Color GetColor(nint netmsg, string fieldName)
     {
         using var fieldNameStr = new ScopedCString(fieldName);
         fixed (byte* fieldNameBufferPtr = fieldNameStr)
         {
-            var ret = _GetColor(netmsg, fieldNameBufferPtr);
-            return ret;
+            Color returnValue = default;
+            _GetColor(&returnValue, netmsg, fieldNameBufferPtr);
+            return returnValue;
         }
     }
 
-    private unsafe static delegate* unmanaged<nint, byte*, int, Color> _GetRepeatedColor;
+    private unsafe static delegate* unmanaged<Color*, nint, byte*, int, void> _GetRepeatedColor;
 
     public unsafe static Color GetRepeatedColor(nint netmsg, string fieldName, int index)
     {
         using var fieldNameStr = new ScopedCString(fieldName);
         fixed (byte* fieldNameBufferPtr = fieldNameStr)
         {
-            var ret = _GetRepeatedColor(netmsg, fieldNameBufferPtr, index);
-            return ret;
+            Color returnValue = default;
+            _GetRepeatedColor(&returnValue, netmsg, fieldNameBufferPtr, index);
+            return returnValue;
         }
     }
 
-    private unsafe static delegate* unmanaged<nint, byte*, Color, void> _SetColor;
+    private unsafe static delegate* unmanaged<nint, byte*, Color*, void> _SetColor;
 
     public unsafe static void SetColor(nint netmsg, string fieldName, Color value)
     {
         using var fieldNameStr = new ScopedCString(fieldName);
         fixed (byte* fieldNameBufferPtr = fieldNameStr)
         {
-            _SetColor(netmsg, fieldNameBufferPtr, value);
+            _SetColor(netmsg, fieldNameBufferPtr, &value);
         }
     }
 
-    private unsafe static delegate* unmanaged<nint, byte*, int, Color, void> _SetRepeatedColor;
+    private unsafe static delegate* unmanaged<nint, byte*, int, Color*, void> _SetRepeatedColor;
 
     public unsafe static void SetRepeatedColor(nint netmsg, string fieldName, int index, Color value)
     {
         using var fieldNameStr = new ScopedCString(fieldName);
         fixed (byte* fieldNameBufferPtr = fieldNameStr)
         {
-            _SetRepeatedColor(netmsg, fieldNameBufferPtr, index, value);
+            _SetRepeatedColor(netmsg, fieldNameBufferPtr, index, &value);
         }
     }
 
-    private unsafe static delegate* unmanaged<nint, byte*, Color, void> _AddColor;
+    private unsafe static delegate* unmanaged<nint, byte*, Color*, void> _AddColor;
 
     public unsafe static void AddColor(nint netmsg, string fieldName, Color value)
     {
         using var fieldNameStr = new ScopedCString(fieldName);
         fixed (byte* fieldNameBufferPtr = fieldNameStr)
         {
-            _AddColor(netmsg, fieldNameBufferPtr, value);
+            _AddColor(netmsg, fieldNameBufferPtr, &value);
         }
     }
 
-    private unsafe static delegate* unmanaged<nint, byte*, QAngle> _GetQAngle;
+    private unsafe static delegate* unmanaged<QAngle*, nint, byte*, void> _GetQAngle;
 
     public unsafe static QAngle GetQAngle(nint netmsg, string fieldName)
     {
         using var fieldNameStr = new ScopedCString(fieldName);
         fixed (byte* fieldNameBufferPtr = fieldNameStr)
         {
-            var ret = _GetQAngle(netmsg, fieldNameBufferPtr);
-            return ret;
+            QAngle returnValue = default;
+            _GetQAngle(&returnValue, netmsg, fieldNameBufferPtr);
+            return returnValue;
         }
     }
 
-    private unsafe static delegate* unmanaged<nint, byte*, int, QAngle> _GetRepeatedQAngle;
+    private unsafe static delegate* unmanaged<QAngle*, nint, byte*, int, void> _GetRepeatedQAngle;
 
     public unsafe static QAngle GetRepeatedQAngle(nint netmsg, string fieldName, int index)
     {
         using var fieldNameStr = new ScopedCString(fieldName);
         fixed (byte* fieldNameBufferPtr = fieldNameStr)
         {
-            var ret = _GetRepeatedQAngle(netmsg, fieldNameBufferPtr, index);
-            return ret;
+            QAngle returnValue = default;
+            _GetRepeatedQAngle(&returnValue, netmsg, fieldNameBufferPtr, index);
+            return returnValue;
         }
     }
 
-    private unsafe static delegate* unmanaged<nint, byte*, QAngle, void> _SetQAngle;
+    private unsafe static delegate* unmanaged<nint, byte*, QAngle*, void> _SetQAngle;
 
     public unsafe static void SetQAngle(nint netmsg, string fieldName, QAngle value)
     {
         using var fieldNameStr = new ScopedCString(fieldName);
         fixed (byte* fieldNameBufferPtr = fieldNameStr)
         {
-            _SetQAngle(netmsg, fieldNameBufferPtr, value);
+            _SetQAngle(netmsg, fieldNameBufferPtr, &value);
         }
     }
 
-    private unsafe static delegate* unmanaged<nint, byte*, int, QAngle, void> _SetRepeatedQAngle;
+    private unsafe static delegate* unmanaged<nint, byte*, int, QAngle*, void> _SetRepeatedQAngle;
 
     public unsafe static void SetRepeatedQAngle(nint netmsg, string fieldName, int index, QAngle value)
     {
         using var fieldNameStr = new ScopedCString(fieldName);
         fixed (byte* fieldNameBufferPtr = fieldNameStr)
         {
-            _SetRepeatedQAngle(netmsg, fieldNameBufferPtr, index, value);
+            _SetRepeatedQAngle(netmsg, fieldNameBufferPtr, index, &value);
         }
     }
 
-    private unsafe static delegate* unmanaged<nint, byte*, QAngle, void> _AddQAngle;
+    private unsafe static delegate* unmanaged<nint, byte*, QAngle*, void> _AddQAngle;
 
     public unsafe static void AddQAngle(nint netmsg, string fieldName, QAngle value)
     {
         using var fieldNameStr = new ScopedCString(fieldName);
         fixed (byte* fieldNameBufferPtr = fieldNameStr)
         {
-            _AddQAngle(netmsg, fieldNameBufferPtr, value);
+            _AddQAngle(netmsg, fieldNameBufferPtr, &value);
         }
     }
 
