@@ -22,18 +22,15 @@ internal static class Bootstrap
     private static IHost? sw2Host;
     private static nint SteamAPIDLLResolver(string libraryName)
     {
-        if (libraryName == "steam_api")
+        if (OperatingSystem.IsWindows())
         {
-            if (OperatingSystem.IsWindows())
-            {
-                libraryName += "64";
-            }
-
-            if (NativeLibrary.TryLoad(libraryName, out var handle))
-            {
-                return handle;
-            }
+            libraryName += "64";
         }
+
+        if (NativeLibrary.TryLoad(libraryName, out var handle))
+            return handle;
+        if (NativeLibrary.TryLoad("lib"+libraryName, out handle))
+            return handle;
 
         return 0;
     }
