@@ -75,6 +75,7 @@ internal static class EventPublisher
             NativeNetMessages.SetNetMessageServerHook((nint)(delegate* unmanaged< nint, int, nint, int >)&OnNetMessageServerDispatch);
             NativeNetMessages.SetNetMessageClientHook((nint)(delegate* unmanaged< int, int, nint, int >)&OnNetMessageClientDispatch);
             NativeNetMessages.SetNetMessageServerHookInternal((nint)(delegate* unmanaged< int, int, nint, int >)&OnNetMessageServerInternalDispatch);
+            NetMessageDispatcher.Initialize();
             NativeGameEvents.SetListenerPreHandler((nint)(delegate* unmanaged< uint, nint, nint, int >)&OnGameEventPreDispatch);
             NativeGameEvents.SetListenerPostHandler((nint)(delegate* unmanaged< uint, nint, nint, int >)&OnGameEventPostDispatch);
         }
@@ -186,7 +187,7 @@ internal static class EventPublisher
     {
         try
         {
-            return NetMessageService.DispatchServerMessage(pPlayerMask, msgId, pMessage);
+            return NetMessageDispatcher.DispatchServerMessage(pPlayerMask, msgId, pMessage);
         }
         catch (Exception e)
         {
@@ -201,7 +202,7 @@ internal static class EventPublisher
     {
         try
         {
-            return NetMessageService.DispatchClientMessage(playerId, msgId, pMessage);
+            return NetMessageDispatcher.DispatchClientMessage(playerId, msgId, pMessage);
         }
         catch (Exception e)
         {
@@ -216,7 +217,7 @@ internal static class EventPublisher
     {
         try
         {
-            return NetMessageService.DispatchServerInternalMessage(playerId, msgId, pMessage);
+            return NetMessageDispatcher.DispatchServerInternalMessage(playerId, msgId, pMessage);
         }
         catch (Exception e)
         {

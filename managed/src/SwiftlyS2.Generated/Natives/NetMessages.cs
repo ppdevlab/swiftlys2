@@ -938,6 +938,23 @@ internal static class NativeNetMessages
         _SendMessageToPlayers(netmsg, msgid, playermask);
     }
 
+    private unsafe static delegate* unmanaged<int, int, void> _RegisterMessageHook;
+
+    /// <summary>
+    /// hookType: 0 = server, 1 = client, 2 = server internal, only registered messages are sent to the hooks
+    /// </summary>
+    public unsafe static void RegisterMessageHook(int hookType, int messageid)
+    {
+        _RegisterMessageHook(hookType, messageid);
+    }
+
+    private unsafe static delegate* unmanaged<int, int, void> _UnregisterMessageHook;
+
+    public unsafe static void UnregisterMessageHook(int hookType, int messageid)
+    {
+        _UnregisterMessageHook(hookType, messageid);
+    }
+
     private unsafe static delegate* unmanaged<nint, void> _SetNetMessageServerHook;
 
     /// <summary>

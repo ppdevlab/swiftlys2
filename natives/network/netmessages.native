@@ -77,6 +77,8 @@ void ClearRepeatedField = ptr netmsg, string fieldName
 void Clear = ptr netmsg
 sync void SendMessage = ptr netmsg, int32 msgid, int32 playerid
 sync void SendMessageToPlayers = ptr netmsg, int32 msgid, uint64 playermask // each bit in player_mask represents a playerid
+void RegisterMessageHook = int32 hookType, int32 messageid // hookType: 0 = server, 1 = client, 2 = server internal, only registered messages are sent to the hooks
+void UnregisterMessageHook = int32 hookType, int32 messageid
 void SetNetMessageServerHook = ptr callback // the callback should receive the following: uint64* playermask_ptr, int netmessage_id, void* netmsg, return HookResult int
 void SetNetMessageClientHook = ptr callback // the callback should receive the following: int32 playerid, int netmessage_id, void* netmsg, return HookResult int
 void SetNetMessageServerHookInternal = ptr callback // callback should receive the following: int32 playerid, int netmessage_id, void* netmsg, return HookResult int

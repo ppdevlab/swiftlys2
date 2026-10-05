@@ -983,6 +983,16 @@ void Bridge_NetMessages_SendMessageToPlayers(void* pmsg, int msgid, uint64_t pla
     bypassPostEventAbstractHook = false;
 }
 
+void Bridge_NetMessages_RegisterMessageHook(int hookType, int messageid)
+{
+    g_pNetMessages->RegisterMessageHook((NetMessageHookType)hookType, messageid);
+}
+
+void Bridge_NetMessages_UnregisterMessageHook(int hookType, int messageid)
+{
+    g_pNetMessages->UnregisterMessageHook((NetMessageHookType)hookType, messageid);
+}
+
 void Bridge_NetMessages_SetNetMessageServerHook(void* callback_ptr)
 {
     g_pNetMessages->SetServerMessageSendHandler([callback_ptr](uint64_t* clients, int messageid, void* msg) {
@@ -1081,6 +1091,8 @@ DEFINE_NATIVE("NetMessages.ClearRepeatedField", Bridge_NetMessages_ClearRepeated
 DEFINE_NATIVE("NetMessages.Clear", Bridge_NetMessages_Clear);
 DEFINE_NATIVE("NetMessages.SendMessage", Bridge_NetMessages_SendMessage);
 DEFINE_NATIVE("NetMessages.SendMessageToPlayers", Bridge_NetMessages_SendMessageToPlayers);
+DEFINE_NATIVE("NetMessages.RegisterMessageHook", Bridge_NetMessages_RegisterMessageHook);
+DEFINE_NATIVE("NetMessages.UnregisterMessageHook", Bridge_NetMessages_UnregisterMessageHook);
 DEFINE_NATIVE("NetMessages.SetNetMessageServerHook", Bridge_NetMessages_SetNetMessageServerHook);
 DEFINE_NATIVE("NetMessages.SetNetMessageClientHook", Bridge_NetMessages_SetNetMessageClientHook);
 DEFINE_NATIVE("NetMessages.SetNetMessageServerHookInternal", Bridge_NetMessages_SetNetMessageServerHookInternal);
