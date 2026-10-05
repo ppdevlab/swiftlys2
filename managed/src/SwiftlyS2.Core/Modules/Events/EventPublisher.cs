@@ -70,8 +70,6 @@ internal static class EventPublisher
             _ = NativeConvars.AddGlobalChangeListener((nint)(delegate* unmanaged< nint, int, nint, nint, void >)&OnConVarValueChanged);
             _ = NativeConvars.AddQueryClientCvarCallback((nint)(delegate* unmanaged< int, nint, nint, void >)&ConVarQueryCallback);
             NativeCommands.SetCommandHandler((nint)(delegate* unmanaged< nint, int, nint, nint, nint, byte, void >)&OnCommandDispatch);
-            NativeCommands.SetClientCommandHandler((nint)(delegate* unmanaged< int, nint, int >)&OnClientCommandDispatch);
-            NativeCommands.SetClientChatHandler((nint)(delegate* unmanaged< int, nint, byte, int >)&OnClientChatDispatch);
             NativeNetMessages.SetNetMessageServerHook((nint)(delegate* unmanaged< nint, int, nint, int >)&OnNetMessageServerDispatch);
             NativeNetMessages.SetNetMessageClientHook((nint)(delegate* unmanaged< int, int, nint, int >)&OnNetMessageClientDispatch);
             NativeNetMessages.SetNetMessageServerHookInternal((nint)(delegate* unmanaged< int, int, nint, int >)&OnNetMessageServerInternalDispatch);
@@ -141,7 +139,7 @@ internal static class EventPublisher
             var args = argsString.Split('\x01');
             if (args.Length < 2) args = [.. args.Where(s => !string.IsNullOrWhiteSpace(s))];
 
-            CommandService.DispatchCommand(commandName, playerId, args, originalCommandName, prefix, silent == 1);
+            CommandDispatcher.DispatchCommand(commandName, playerId, args, originalCommandName, prefix, silent == 1);
         }
         catch (Exception e)
         {
@@ -156,7 +154,7 @@ internal static class EventPublisher
         try
         {
             var commandLine = StringAlloc.CreateCSharpString(commandLinePtr);
-            return CommandService.DispatchClientCommand(playerId, commandLine);
+            return CommandDispatcher.DispatchClientCommand(playerId, commandLine);
         }
         catch (Exception e)
         {
@@ -172,7 +170,7 @@ internal static class EventPublisher
         try
         {
             var text = StringAlloc.CreateCSharpString(textPtr);
-            return CommandService.DispatchClientChat(playerId, text, teamonly == 1);
+            return CommandDispatcher.DispatchClientChat(playerId, text, teamonly == 1);
         }
         catch (Exception e)
         {
