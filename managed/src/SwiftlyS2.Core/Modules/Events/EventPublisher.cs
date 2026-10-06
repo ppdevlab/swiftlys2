@@ -529,15 +529,10 @@ internal static class EventPublisher
     [UnmanagedCallersOnly]
     public static void OnClientDisconnected( int playerId, int reason )
     {
-        if (subscribers.Count == 0)
-        {
-            return;
-        }
-
-        if (!ListensToClientDisconnected) return;
-
         try
         {
+            if (subscribers.Count == 0 || !ListensToClientDisconnected) return;
+
             OnClientDisconnectedEvent @event = new() {
                 PlayerId = playerId,
                 Reason = (ENetworkDisconnectionReason)reason
@@ -546,20 +541,17 @@ internal static class EventPublisher
             {
                 subscribers[i].InvokeOnClientDisconnected(ref @event);
             }
-
-            PlayerManagerService.UnregisterPlayerObject(playerId);
-
         }
         catch (Exception e)
         {
-            if (!GlobalExceptionHandler.Handle(ref e))
+            if (GlobalExceptionHandler.Handle(ref e))
             {
-                PlayerManagerService.UnregisterPlayerObject(playerId);
-                return;
+                AnsiConsole.WriteException(e);
             }
-
+        }
+        finally
+        {
             PlayerManagerService.UnregisterPlayerObject(playerId);
-            AnsiConsole.WriteException(e);
         }
     }
 
@@ -620,14 +612,9 @@ internal static class EventPublisher
     {
         try
         {
-            if (subscribers.Count == 0)
-            {
-                return;
-            }
-
             if (clientKind == (int)ClientKind.Bot) PlayerManagerService.RegisterPlayerObject(playerId);
 
-            if (!ListensToClientPutInServer) return;
+            if (subscribers.Count == 0 || !ListensToClientPutInServer) return;
 
             OnClientPutInServerEvent @event = new() {
                 PlayerId = playerId,
