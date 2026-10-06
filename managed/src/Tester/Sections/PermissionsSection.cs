@@ -190,6 +190,8 @@ public sealed class PermissionsSection( ISwiftlyCore core ) : Section(core)
         return Task.CompletedTask;
     }
 
+    public override bool ProfileInBackground => true;
+
     public override Task Profile( ProfileContext p )
     {
         var perm = Perm;

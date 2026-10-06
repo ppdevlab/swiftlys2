@@ -16,7 +16,19 @@ public abstract class Ctx( ISwiftlyCore core, IPlayer caller )
 
     internal IReadOnlyList<string> Lines => _lines;
 
-    protected void Add( string line ) => _lines.Add(line);
+    internal Action<string>? Live { get; set; }
+
+    protected void Add( string line )
+    {
+        _lines.Add(line);
+        Live?.Invoke(line);
+    }
+
+    private readonly List<(string Name, string? Detail)> _failures = [];
+
+    internal IReadOnlyList<(string Name, string? Detail)> Failures => _failures;
+
+    protected void AddFailure( string name, string? detail ) => _failures.Add((name, detail));
 
     public Task NextTick()
     {
@@ -78,7 +90,7 @@ public sealed class TestContext( ISwiftlyCore core, IPlayer caller ) : Ctx(core,
         var t0 = Stopwatch.GetTimestamp();
         try { body(); Record("PASS", name, t0, null); Passed++; }
         catch (SkipException s) { Record("SKIP", name, t0, s.Message); Skipped++; }
-        catch (Exception e) { Record("FAIL", name, t0, e.Message); Failed++; }
+        catch (Exception e) { Record("FAIL", name, t0, e.Message); AddFailure(name, e.Message); Failed++; }
     }
 
     public async Task TestAsync( string name, Func<Task> body )
@@ -86,7 +98,7 @@ public sealed class TestContext( ISwiftlyCore core, IPlayer caller ) : Ctx(core,
         var t0 = Stopwatch.GetTimestamp();
         try { await body(); Record("PASS", name, t0, null); Passed++; }
         catch (SkipException s) { Record("SKIP", name, t0, s.Message); Skipped++; }
-        catch (Exception e) { Record("FAIL", name, t0, e.Message); Failed++; }
+        catch (Exception e) { Record("FAIL", name, t0, e.Message); AddFailure(name, e.Message); Failed++; }
     }
 
     private void Record( string status, string name, long t0, string? detail )
@@ -123,6 +135,172 @@ public sealed class ProfileContext( ISwiftlyCore core, IPlayer caller ) : Ctx(co
         catch (Exception e)
         {
             Add($"  {name,-48} ERROR {e.Message}");
+            AddFailure(name, e.Message);
+        }
+    }
+
+    /// <summary>
+    /// For calls of unknown cost (native scans). Times one call, then repeats only as many as fit in
+    /// <paramref name="budgetMs"/> (at least 1, at most <paramref name="maxIterations"/>), so a slow call cannot
+    /// stall the game thread for long. The first call is included in the average.
+    /// </summary>
+    public void ProfileBudget( string name, Action body, int maxIterations = 1_000, int budgetMs = 500 )
+    {
+        try
+        {
+            var a0 = GC.GetAllocatedBytesForCurrentThread();
+            var t0 = Stopwatch.GetTimestamp();
+            body();
+            var firstMs = Stopwatch.GetElapsedTime(t0).TotalMilliseconds;
+            var n = 1;
+            var limit = (int)Math.Clamp(budgetMs / Math.Max(firstMs, 0.001), 1, maxIterations);
+            for (; n < limit; n++) body();
+            var elapsed = Stopwatch.GetElapsedTime(t0);
+            var bytes = (double)(GC.GetAllocatedBytesForCurrentThread() - a0) / n;
+            Add($"  {name,-48} {elapsed.TotalNanoseconds / n,10:F1} ns/op {bytes,8:F1} B/op {n,8} iters (budgeted, first call {firstMs:F2} ms)");
+            Count++;
+        }
+        catch (Exception e)
+        {
+            Add($"  {name,-48} ERROR {e.Message}");
+            AddFailure(name, e.Message);
+        }
+    }
+
+    public T OnGame<T>( Func<T> body )
+    {
+        if (Core.IsGameThread) return body();
+        T result = default!;
+        Exception? error = null;
+        using var done = new ManualResetEventSlim();
+        Core.Scheduler.NextTick(() =>
+        {
+            try { result = body(); }
+            catch (Exception e) { error = e; }
+            finally { done.Set(); }
+        });
+        done.Wait();
+        return error is null ? result : throw new InvalidOperationException("game-thread call failed: " + error.Message, error);
+    }
+
+    public void OnGame( Action body ) => OnGame<object?>(() => { body(); return null; });
+
+    public void ProfileOnGame( string name, Action body, int iterations = 10_000, double sliceMs = 3 )
+    {
+        if (Core.IsGameThread)
+        {
+            Profile(name, body, iterations);
+            return;
+        }
+
+        try
+        {
+            const int batches = 5;
+            var per = Math.Max(1, iterations / batches);
+            var warmup = Math.Min(per, 1000);
+            var ns = new double[batches];
+            var bytes = new double[batches];
+            var phase = -1;
+            var done = 0;
+            var chunk = 1;
+            double elapsedNs = 0, allocated = 0;
+            Exception? error = null;
+            using var finished = new ManualResetEventSlim();
+
+            void Slice()
+            {
+                try
+                {
+                    var start = Stopwatch.GetTimestamp();
+                    while (true)
+                    {
+                        var target = phase < 0 ? warmup : per;
+                        var n = Math.Min(chunk, target - done);
+                        var a0 = GC.GetAllocatedBytesForCurrentThread();
+                        var t0 = Stopwatch.GetTimestamp();
+                        for (var i = 0; i < n; i++) body();
+                        var dt = Stopwatch.GetElapsedTime(t0);
+                        done += n;
+                        if (phase >= 0)
+                        {
+                            elapsedNs += dt.TotalNanoseconds;
+                            allocated += GC.GetAllocatedBytesForCurrentThread() - a0;
+                        }
+
+                        if (dt.TotalMilliseconds > sliceMs / 2 && chunk > 1) chunk = Math.Max(1, chunk / 2);
+                        else if (dt.TotalMilliseconds < sliceMs / 16 && chunk < 4096) chunk *= 2;
+
+                        if (done >= target)
+                        {
+                            if (phase >= 0)
+                            {
+                                ns[phase] = elapsedNs / per;
+                                bytes[phase] = allocated / per;
+                                elapsedNs = 0;
+                                allocated = 0;
+                            }
+                            phase++;
+                            done = 0;
+                            if (phase >= batches)
+                            {
+                                finished.Set();
+                                return;
+                            }
+                        }
+
+                        if (Stopwatch.GetElapsedTime(start).TotalMilliseconds >= sliceMs)
+                        {
+                            Core.Scheduler.NextTick(Slice);
+                            return;
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    error = e;
+                    finished.Set();
+                }
+            }
+
+            Core.Scheduler.NextTick(Slice);
+            finished.Wait();
+            if (error is not null) throw error;
+
+            Array.Sort(ns);
+            Array.Sort(bytes);
+            Add($"  {name,-48} {ns[batches / 2],10:F1} ns/op {bytes[batches / 2],8:F1} B/op {per * batches,8} iters (sliced on game thread)");
+            Count++;
+        }
+        catch (Exception e)
+        {
+            Add($"  {name,-48} ERROR {e.Message}");
+            AddFailure(name, e.Message);
+        }
+    }
+
+    public async Task ProfileAsync( string name, Func<Task> body, int iterations = 500 )
+    {
+        try
+        {
+            const int batches = 5;
+            var per = Math.Max(1, iterations / batches);
+            for (var i = 0; i < Math.Min(per, 50); i++) await body();
+
+            var ns = new double[batches];
+            for (var b = 0; b < batches; b++)
+            {
+                var t0 = Stopwatch.GetTimestamp();
+                for (var i = 0; i < per; i++) await body();
+                ns[b] = Stopwatch.GetElapsedTime(t0).TotalNanoseconds / per;
+            }
+            Array.Sort(ns);
+            Add($"  {name,-48} {ns[batches / 2],10:F1} ns/op {"-",8} B/op {per * batches,8} iters");
+            Count++;
+        }
+        catch (Exception e)
+        {
+            Add($"  {name,-48} ERROR {e.Message}");
+            AddFailure(name, e.Message);
         }
     }
 }

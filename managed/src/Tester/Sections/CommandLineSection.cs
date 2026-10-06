@@ -99,6 +99,8 @@ public sealed class CommandLineSection( ISwiftlyCore core ) : Section(core)
         return Task.CompletedTask;
     }
 
+    public override bool ProfileInBackground => true;
+
     public override Task Profile( ProfileContext p )
     {
         var cl = Core.CommandLine;

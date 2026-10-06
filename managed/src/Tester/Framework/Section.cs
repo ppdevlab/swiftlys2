@@ -10,5 +10,7 @@ public abstract class Section( ISwiftlyCore core )
 
     public virtual Task Test( TestContext t ) => Task.CompletedTask;
 
+    public virtual bool ProfileInBackground => false;
+
     public virtual Task Profile( ProfileContext p ) => Task.CompletedTask;
 }

@@ -98,6 +98,8 @@ public sealed class EnvironmentSection( ISwiftlyCore core ) : Section(core)
         });
     }
 
+    public override bool ProfileInBackground => true;
+
     public override Task Profile( ProfileContext p )
     {
         var core = Core;
