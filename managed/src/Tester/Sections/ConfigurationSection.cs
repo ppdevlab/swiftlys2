@@ -1,4 +1,6 @@
+using System.ComponentModel;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.Configuration;
 using SwiftlyS2.Shared;
 using SwiftlyS2.Shared.Services;
@@ -16,6 +18,27 @@ public sealed class ConfigurationSection( ISwiftlyCore core ) : Section(core)
         public string Text { get; set; } = "hello";
         public bool Flag { get; set; } = true;
         public List<string> Items { get; set; } = ["a", "b"];
+    }
+
+    public sealed class DescribedInnerModel
+    {
+        [Description("Inner flag")]
+        public bool Enabled { get; set; } = true;
+    }
+
+    public sealed class DescribedModel
+    {
+        [Description("How many times\nSecond line")]
+        public int Number { get; set; } = 7;
+
+        public string Text { get; set; } = "hello";
+
+        [Description("Renamed key")]
+        [JsonPropertyName("renamed_key")]
+        public string Renamed { get; set; } = "value";
+
+        [Description("Nested section")]
+        public DescribedInnerModel Inner { get; set; } = new();
     }
 
     public override string Name => "configuration";
@@ -157,6 +180,71 @@ public sealed class ConfigurationSection( ISwiftlyCore core ) : Section(core)
                 Equal(7, model!.Number, "Number");
                 Equal("hello", model.Text, "Text");
                 Expect(model.Items.Distinct().SequenceEqual(["a", "b"]), $"Items: [{string.Join(", ", model.Items)}]");
+            }));
+
+        t.Test("InitializeJsonWithModel writes [Description] as // comments above the key in a .jsonc file", () =>
+            WithFile(".jsonc", ( name, path ) =>
+            {
+                _ = cfg.InitializeJsonWithModel<DescribedModel>(name, "Main");
+                var text = File.ReadAllText(path).Replace("\r\n", "\n");
+                Expect(text.Contains("    // How many times\n    // Second line\n    \"Number\": 7"), $"no multi-line comment above Number:\n{text}");
+                Expect(text.Contains("    // Renamed key\n    \"renamed_key\""), $"no comment above the JsonPropertyName key:\n{text}");
+                Expect(text.Contains("    // Nested section\n    \"Inner\""), $"no comment above the nested object:\n{text}");
+                Expect(text.Contains("      // Inner flag\n      \"Enabled\": true"), $"no comment inside the nested object:\n{text}");
+                Expect(text.Contains("    \"Number\": 7,\n    \"Text\": \"hello\","), $"comment on an undescribed key:\n{text}");
+            }));
+
+        t.Test("JSONC with description comments binds back to the model through the Manager", () =>
+            WithFile(".jsonc", ( name, unused ) =>
+            {
+                _ = cfg.InitializeJsonWithModel<DescribedModel>(name, "Main");
+                _ = cfg.Configure(b => b.AddJsonFile(name, optional: false, reloadOnChange: false));
+                var model = cfg.Manager.GetSection("Main").Get<DescribedModel>();
+                NotNull(model, "bound model");
+                Equal(7, model!.Number, "Number");
+                Equal("hello", model.Text, "Text");
+                Expect(model.Inner.Enabled, "Inner.Enabled");
+            }));
+
+        t.Test("InitializeJsonWithModel ignores descriptions in a .json file", () =>
+            WithFile(".json", ( name, path ) =>
+            {
+                _ = cfg.InitializeJsonWithModel<DescribedModel>(name, "Main");
+                var text = File.ReadAllText(path);
+                Expect(!text.Contains("//"), $"comment written into a .json file:\n{text}");
+                using var doc = JsonDocument.Parse(text);
+                Equal(7, doc.RootElement.GetProperty("Main").GetProperty("Number").GetInt32(), "Number");
+            }));
+
+        t.Test("InitializeJsonWithModel without descriptions stays plain JSON", () =>
+            WithFile(".json", ( name, path ) =>
+            {
+                _ = cfg.InitializeJsonWithModel<TesterModel>(name, "Main");
+                var text = File.ReadAllText(path);
+                Expect(!text.Contains("//"), $"unexpected comment:\n{text}");
+                using var doc = JsonDocument.Parse(text);
+                Equal(7, doc.RootElement.GetProperty("Main").GetProperty("Number").GetInt32(), "Number");
+            }));
+
+        t.Test("InitializeTomlWithModel writes [Description] as # comments above the key", () =>
+            WithFile(".toml", ( name, path ) =>
+            {
+                _ = cfg.InitializeTomlWithModel<DescribedModel>(name, "Main");
+                var text = File.ReadAllText(path).Replace("\r\n", "\n");
+                Expect(text.Contains("[Main]\n# How many times\n# Second line\nNumber = 7"), $"no multi-line comment above Number:\n{text}");
+                Expect(text.Contains("# Nested section\n"), $"no comment for the nested section:\n{text}");
+                Expect(!text.Contains("# Text"), $"comment on an undescribed key:\n{text}");
+            }));
+
+        t.Test("TOML with description comments binds back to the model through the Manager", () =>
+            WithFile(".toml", ( name, unused ) =>
+            {
+                _ = cfg.InitializeTomlWithModel<DescribedModel>(name, "Main");
+                _ = cfg.Configure(b => b.AddTomlFile(name, optional: false, reloadOnChange: false));
+                var model = cfg.Manager.GetSection("Main").Get<DescribedModel>();
+                NotNull(model, "bound model");
+                Equal(7, model!.Number, "Number");
+                Equal("hello", model.Text, "Text");
             }));
 
         t.Test("InitializeWithTemplate copies the packaged template", () =>
