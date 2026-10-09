@@ -217,7 +217,7 @@ internal class ConVar<T> : ConVar, IConVar<T>
 
         if (!HasMinValue)
         {
-            throw new Exception($"Convar {Name} doesn't have a min value.");
+            throw new InvalidOperationException($"Convar {Name} doesn't have a min value.");
         }
 
         return ReadThroughPointer(MinValuePtrPtr);
@@ -229,7 +229,7 @@ internal class ConVar<T> : ConVar, IConVar<T>
 
         if (!HasMaxValue)
         {
-            throw new Exception($"Convar {Name} doesn't have a max value.");
+            throw new InvalidOperationException($"Convar {Name} doesn't have a max value.");
         }
 
         return ReadThroughPointer(MaxValuePtrPtr);
@@ -332,7 +332,7 @@ internal class ConVar<T> : ConVar, IConVar<T>
     {
         if (!IsMinMaxType)
         {
-            throw new Exception($"Convar {Name} is not a min/max type.");
+            throw new InvalidOperationException($"Convar {Name} is not a min/max type.");
         }
     }
 
