@@ -7,17 +7,13 @@ using SwiftlyS2.Shared.SchemaDefinitions;
 
 namespace SwiftlyS2.Core.GameHooks;
 
-internal struct CUserCmd : IUserCmd, IDisposable
+internal class CUserCmd : IUserCmd, IDisposable
 {
     private bool _disposed = false;
     private CSGOUserCmdPBImpl? _csgoUserCmd = null;
     private CInButtonStateImpl? _buttonState = null;
 
-    public CUserCmd()
-    {
-    }
-
-    public required nint Address { get; init; }
+    public required nint Address { get; internal set; }
 
     public uint CommandNumber {
         get {
@@ -32,11 +28,9 @@ internal struct CUserCmd : IUserCmd, IDisposable
 
     public CSGOUserCmdPB CSGOUserCmd {
         get {
-            if (_csgoUserCmd == null)
-            {
-                ThrowIfInvalid();
-                _csgoUserCmd = new CSGOUserCmdPBImpl(Address + 0x10, false);
-            }
+            ThrowIfInvalid();
+            _csgoUserCmd ??= new CSGOUserCmdPBImpl(Address + 0x10, false);
+            _csgoUserCmd.DangerouslySetAddress(Address + 0x10);
 
             return _csgoUserCmd;
         }
@@ -44,11 +38,9 @@ internal struct CUserCmd : IUserCmd, IDisposable
 
     public CInButtonState ButtonState {
         get {
-            if (_buttonState == null)
-            {
-                ThrowIfInvalid();
-                _buttonState = new CInButtonStateImpl(Address + 0x58);
-            }
+            ThrowIfInvalid();
+            _buttonState ??= new CInButtonStateImpl(Address + 0x58);
+            _buttonState.DangerouslySetAddress(Address + 0x58);
             return _buttonState;
         }
     }

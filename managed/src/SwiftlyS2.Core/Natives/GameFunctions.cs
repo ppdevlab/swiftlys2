@@ -29,6 +29,8 @@ internal static class GameFunctions
     public static unsafe delegate* unmanaged< Vector*, QAngle*, Vector*, Vector*, nint, uint, nint > pCMolotovProjectileEmitGrenade;
     public static unsafe delegate* unmanaged< nint, nint, nint, nint, nint, nint, float, nint, nint, void > pCEntitySystemAddEntityIOEvent;
     public static unsafe delegate* unmanaged< nint, int, nint > pCreateEntityByName;
+    public static unsafe delegate* unmanaged< nint, nint, void > pCBaseEntityDispatchSpawn;
+    public static unsafe delegate* unmanaged< nint, void > pUtilRemove;
     public static unsafe delegate* unmanaged< nint, nint, nint, nint, nint, void > pCEntityInstaceAcceptInput;
     public static unsafe delegate* unmanaged< nint, int, void > pSwitchTeam;
     public static unsafe delegate* unmanaged< nint, int, nint*, nint*, nint*, void > pCCSCustomHudLayoutSetDialogVariableStringForPlayer;
@@ -54,6 +56,7 @@ internal static class GameFunctions
     private static readonly Lazy<int> _goToIntermissionOffset = CreateOffset("CGameRules::GoToIntermission");
     private static readonly Lazy<int> _changeTeamOffset = CreateOffset("CCSPlayerController::ChangeTeam");
     private static readonly Lazy<int> _takeGuidOffset = CreateOffset("CSoundSystem::TakeGuid");
+    private static readonly Lazy<int> _traceShapeOffset = CreateOffset("CNavPhysicsInterface::TraceShape");
 
     public static int TeleportOffset => _teleportOffset.Value;
     public static int CommitSuicideOffset => _commitSuicideOffset.Value;
@@ -71,6 +74,7 @@ internal static class GameFunctions
     public static int GoToIntermissionOffset => _goToIntermissionOffset.Value;
     public static int ChangeTeamOffset => _changeTeamOffset.Value;
     public static int TakeGuidOffset => _takeGuidOffset.Value;
+    public static int TraceShapeOffset => _traceShapeOffset.Value;
 
     private static void CheckPtr( nint ptr, string name )
     {
@@ -107,6 +111,8 @@ internal static class GameFunctions
             pCEntitySystemAddEntityIOEvent = (delegate* unmanaged< nint, nint, nint, nint, nint, nint, float, nint, nint, void >)NativeSignatures.Fetch("CEntitySystem::AddEntityIOEvent");
             pCEntityInstaceAcceptInput = (delegate* unmanaged< nint, nint, nint, nint, nint, void >)NativeSignatures.Fetch("CEntityInstance::AcceptInput");
             pCreateEntityByName = (delegate* unmanaged< nint, int, nint >)NativeSignatures.Fetch("UTIL::CreateEntityByName");
+            pCBaseEntityDispatchSpawn = (delegate* unmanaged< nint, nint, void >)NativeSignatures.Fetch("CBaseEntity::DispatchSpawn");
+            pUtilRemove = (delegate* unmanaged< nint, void >)NativeSignatures.Fetch("UTIL::Remove");
 
             pCCSCustomHudLayoutSetDialogVariableStringForPlayer = (delegate* unmanaged< nint, int, nint*, nint*, nint*, void >)NativeSignatures.Fetch("CCSCustomHudLayout::SetDialogVariableStringForPlayer");
             pCCSCustomHudLayoutRemoveDialogVariableStringForPlayer = (delegate* unmanaged< nint, int, nint*, nint*, void >)NativeSignatures.Fetch("CCSCustomHudLayout::RemoveDialogVariableStringForPlayer");
@@ -123,6 +129,8 @@ internal static class GameFunctions
             {
                 pTerminateRoundLinux = (delegate* unmanaged< nint, uint, nint, float, void >)NativeSignatures.Fetch("CGameRules::TerminateRound");
             }
+
+            pTraceShape = (delegate* unmanaged< nint, Ray_t*, Vector*, Vector*, CTraceFilter*, CGameTrace*, void >)((void**)NativeMemoryHelpers.GetVirtualTableAddress("server", "CNavPhysicsInterface"))[TraceShapeOffset];
         }
     }
 
@@ -161,6 +169,44 @@ internal static class GameFunctions
         {
             AnsiConsole.WriteException(e);
             return 0;
+        }
+    }
+
+    public static void DispatchSpawn( nint pEntity, nint pKeyValues )
+    {
+        NativeBinding.ThrowIfNonMainThread();
+
+        try
+        {
+            CheckPtr(pEntity, nameof(pEntity));
+
+            unsafe
+            {
+                pCBaseEntityDispatchSpawn(pEntity, pKeyValues);
+            }
+        }
+        catch (Exception e)
+        {
+            AnsiConsole.WriteException(e);
+        }
+    }
+
+    public static void Despawn( nint pEntity )
+    {
+        NativeBinding.ThrowIfNonMainThread();
+
+        try
+        {
+            CheckPtr(pEntity, nameof(pEntity));
+
+            unsafe
+            {
+                pUtilRemove(pEntity);
+            }
+        }
+        catch (Exception e)
+        {
+            AnsiConsole.WriteException(e);
         }
     }
 
@@ -340,7 +386,6 @@ internal static class GameFunctions
     private static unsafe bool Is16Aligned( CGameTrace* pTrace ) => ((nuint)pTrace & 15) == 0;
 
     public static unsafe void TraceShape(
-        nint pEngineTrace,
         Ray_t* ray,
         Vector vecStart,
         Vector vecEnd,
@@ -352,12 +397,11 @@ internal static class GameFunctions
         {
             unsafe
             {
-                CheckPtr(pEngineTrace, nameof(pEngineTrace));
                 CheckPtr(pTrace, nameof(pTrace));
                 // FUCK YOU WINDOWS
                 if (IsWindows || Is16Aligned(pTrace))
                 {
-                    pTraceShape(pEngineTrace, ray, &vecStart, &vecEnd, pFilter, pTrace);
+                    pTraceShape(0, ray, &vecStart, &vecEnd, pFilter, pTrace);
                 }
                 // FUCK YOU LINUX SIMD ALIGNMENT
                 else
@@ -366,7 +410,7 @@ internal static class GameFunctions
                     var rawBuffer = stackalloc byte[(int)size + 16];
                     var pAligned = (CGameTrace*)(((nuint)rawBuffer + 15) & ~(nuint)15);
                     NativeMemory.Copy(pTrace, pAligned, size);
-                    pTraceShape(pEngineTrace, ray, &vecStart, &vecEnd, pFilter, pAligned);
+                    pTraceShape(0, ray, &vecStart, &vecEnd, pFilter, pAligned);
                     NativeMemory.Copy(pAligned, pTrace, size);
                 }
             }

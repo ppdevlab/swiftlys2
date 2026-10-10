@@ -11,6 +11,7 @@ using SwiftlyS2.Shared.Misc;
 using SwiftlyS2.Shared.Natives;
 using SwiftlyS2.Shared.Plugins;
 using SwiftlyS2.Shared.SchemaDefinitions;
+using SwiftlyS2.Shared.Schemas;
 using SwiftlyS2.Shared.ProtobufDefinitions;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -381,11 +382,6 @@ public class TestPlugin : BasePlugin
         // {
         //     Console.WriteLine($"PostThink -> {@event.PlayerPawn.OriginalController.Value?.PlayerName}");
         // };
-
-        // Core.Engine.ExecuteCommandWithBuffer("@ping", ( buffer ) =>
-        // {
-        //     Console.WriteLine($"pong: {buffer}");
-        // });
 
         // _ = Core.GameEvent.HookPre<EventShowSurvivalRespawnStatus>(@event =>
         // {
@@ -829,20 +825,32 @@ public class TestPlugin : BasePlugin
         Console.WriteLine("TestPlugin TestCommand6");
     }
 
+    [Command("utlvectorschema")]
+    public void TestUtlVectorSchemaClass( ICommandContext context )
+    {
+        const int count = 4;
+
+        var buffer = Marshal.AllocHGlobal(count * SchemaInfo.Get<CDamageRecord>());
+        var vector = new CUtlVector<CDamageRecord>(buffer, count, count);
+        var missing = 0;
+
+        for (var round = 0; round < 20000; round++)
+        {
+            foreach (var record in vector)
+            {
+                if (record == null) missing++;
+            }
+        }
+
+        Marshal.FreeHGlobal(buffer);
+        context.Reply($"CUtlVector<CDamageRecord>: {missing} null elements");
+    }
+
     [Command("tt99")]
     public void TestCommand99( ICommandContext context )
     {
         Console.WriteLine(context.Sender!.SteamID);
         Console.WriteLine(context.Sender!.UnauthorizedSteamID);
-    }
-
-    [Command("tt7")]
-    public void TestCommand7( ICommandContext _ )
-    {
-        Core.Engine.ExecuteCommandWithBuffer("@ping", ( buffer ) => { Console.WriteLine($"pong: {buffer}"); });
-        Core.Engine.ExecuteCommandWithBuffer("@ping2", ( buffer ) => { Console.WriteLine($"pong2: {buffer}"); });
-        Core.Engine.ExecuteCommandWithBuffer("@ping3", ( buffer ) => { Console.WriteLine($"pong3: {buffer}"); });
-        Core.Engine.ExecuteCommandWithBuffer("@ping4", ( buffer ) => { Console.WriteLine($"pong4: {buffer}"); });
     }
 
     [ClientNetMessageHandler]
@@ -1649,13 +1657,6 @@ public class TestPlugin : BasePlugin
         }
     }
 
-
-    [Command("ecwb")]
-    public void ECWBCommand( ICommandContext _ )
-    {
-        Core.Engine.ExecuteCommandWithBuffer("cs2f_use_old_push 1", ( buffer ) => Core.Logger.LogWarning($"cs2f_use_old_push:\n{buffer}"));
-        Core.Scheduler.NextTick(() => Core.Engine.ExecuteCommandWithBuffer("map_showbombradius", ( buffer ) => Core.Logger.LogWarning($"map_showbombradius:\n{buffer}")));
-    }
 
     [Command("ex1")]
     public void DeepExceptionCommand( ICommandContext _ )

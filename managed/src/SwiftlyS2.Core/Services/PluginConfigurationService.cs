@@ -98,6 +98,10 @@ internal class PluginConfigurationService : IPluginConfigurationService
     };
 
     var configJson = JsonSerializer.Serialize(wrapped, options);
+    if (Path.GetExtension(name).Equals(".jsonc", StringComparison.OrdinalIgnoreCase) && ConfigurationCommentService.HasDescriptions(typeof(T)))
+    {
+      configJson = ConfigurationCommentService.WriteJson(configJson, sectionName, typeof(T), options);
+    }
     File.WriteAllText(configPath, configJson);
 
     return this;
@@ -131,6 +135,10 @@ internal class PluginConfigurationService : IPluginConfigurationService
     };
 
     var tomlString = Toml.FromModel(wrapped, tomlModelOptions);
+    if (ConfigurationCommentService.HasDescriptions(typeof(T)))
+    {
+      tomlString = ConfigurationCommentService.WriteToml(tomlString, sectionName, typeof(T));
+    }
     File.WriteAllText(configPath, tomlString);
 
     return this;

@@ -29,6 +29,9 @@ public interface IPluginConfigurationService
 
   /// <summary>
   /// Initialize the json configuration file with a class as template.
+  /// When the file name ends with <c>.jsonc</c>, properties and fields marked with <see cref="System.ComponentModel.DescriptionAttribute"/>
+  /// are written with their description as <c>//</c> comment lines above the key, including members of nested objects, list items
+  /// and dictionary values. A <c>.json</c> file is always written as plain JSON, since comments are not valid JSON.
   /// </summary>
   /// <typeparam name="T">The type of the configuration model.</typeparam>
   /// <param name="name">The name of the configuration file.</param>
@@ -37,6 +40,8 @@ public interface IPluginConfigurationService
 
   /// <summary>
   /// Initialize the TOML configuration file with a class as template.
+  /// Properties and fields marked with <see cref="System.ComponentModel.DescriptionAttribute"/> are written with their
+  /// description as <c>#</c> comment lines above the key or above the table header. Members of inline tables cannot carry comments.
   /// </summary>
   /// <typeparam name="T">The type of the configuration model.</typeparam>
   /// <param name="name">The name of the configuration file.</param>
